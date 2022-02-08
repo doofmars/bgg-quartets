@@ -6,26 +6,29 @@ import requests as req
 from bs4 import BeautifulSoup
 
 URL = "https://boardgamegeek.com/collection/user/Octavian?own=1"
-collection_file = os.path.join('cache', 'collection.html')
-collection_json = os.path.join('cache', 'collection.json')
+CACHE_DIRECTORY = 'cache'
+COLLECTION_FILE_KEY = 'collection'
 
 
-def load_data():
+def load_data(url, file_name):
     """
     Load data either from web or cache if already present
+    :param url: url to load
+    :param file_name: name of cached file
     :return: soup to parse
     """
-    if not os.path.exists('cache'):
-        os.mkdir('cache')
+    if not os.path.exists(CACHE_DIRECTORY):
+        os.mkdir(CACHE_DIRECTORY)
+    collection_file = os.path.join(CACHE_DIRECTORY, file_name)
     if not os.path.exists(collection_file):
-        print('Reading collection page from web')
-        response = req.get(URL)
+        print(f'Reading {file_name} page from web')
+        response = req.get(url)
         with open(collection_file, 'w', encoding='utf-8') as fp:
             fp.write(response.text)
-            print('Collection page saved to cache folder')
+            print(f'{file_name} saved to cache folder')
         html = response.text
     else:
-        print('Reading file from cache')
+        print(f'Reading {file_name} from cache')
         with open(collection_file, 'r', encoding='utf-8') as fp:
             html = fp.read()
     soup = BeautifulSoup(html, 'html.parser')
@@ -38,7 +41,7 @@ def get_collection():
     """
 
     # Find table containing collection
-    collection_table = load_data().find(id='collectionitems')
+    collection_table = load_data(URL, file_name=f'{COLLECTION_FILE_KEY}.html').find(id='collectionitems')
     collection = list()
 
     # Iterate over collection table, store results to dict
@@ -53,8 +56,14 @@ def get_collection():
 
     print(f'Parsed {len(collection)} items, writing JSON file')
 
+    print(f'\nCollecting game data:')
+    for game in collection:
+        game_id = game.get("id")
+        load_data(f'https://boardgamegeek.com/boardgame/{game_id}', f'{game_id}.html')
+
     # Finally dump data as JSON
-    with open(collection_json, 'w', encoding='UTF-8') as fp:
+    print(f'\nWriting result to JSON:')
+    with open(os.path.join(CACHE_DIRECTORY, f'{COLLECTION_FILE_KEY}.json'), 'w', encoding='UTF-8') as fp:
         json.dump(collection, fp, indent=2)
 
     print(f'JSON file written to cache folder')

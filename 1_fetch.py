@@ -1,6 +1,7 @@
 # coding=utf-8
 import json
 import os
+from types import NoneType
 
 import requests as req
 from bs4 import BeautifulSoup
@@ -61,7 +62,17 @@ def get_collection():
     print(f'\nCollecting game data:')
     for game in collection:
         game_id = game.get("id")
-        load_data(f'https://boardgamegeek.com/boardgame/{game_id}', f'{game_id}.html')
+        game_data = load_data(f'https://boardgamegeek.com/xmlapi/boardgame/{game_id}?stats=1', f'{game_id}.xml')
+        try:
+            game['boardgamecategory'] = game_data.find('boardgamecategory').text
+            game['boardgamesubdomain'] = game_data.find('boardgamesubdomain').text
+            game['image'] = game_data.find('image').text.strip()
+            game['minplayers'] = game_data.find('minplayers').text
+            game['maxplayers'] = game_data.find('maxplayers').text
+            game['playingtime'] = game_data.find('playingtime').text
+        except NoneType as nt:
+            print(f"Missing attribute in game {game_id}")
+            raise nt
 
     # Finally dump data as JSON
     print(f'\nWriting result to JSON:')

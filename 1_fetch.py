@@ -31,8 +31,10 @@ def load_data(url, file_name):
         print(f'Reading {file_name} from cache')
         with open(collection_file, 'r', encoding='utf-8') as fp:
             html = fp.read()
-    soup = BeautifulSoup(html, 'html.parser')
-    return soup
+    if file_name.endswith('html'):
+        return BeautifulSoup(html, 'html.parser')
+    if file_name.endswith('xml'):
+        return BeautifulSoup(html, 'lxml')
 
 
 def get_collection():

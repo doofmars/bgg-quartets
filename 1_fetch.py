@@ -63,16 +63,12 @@ def get_collection():
     for game in collection:
         game_id = game.get("id")
         game_data = load_data(f'https://boardgamegeek.com/xmlapi/boardgame/{game_id}?stats=1', f'{game_id}.xml')
-        try:
-            game['boardgamecategory'] = game_data.find('boardgamecategory').text
-            game['boardgamesubdomain'] = game_data.find('boardgamesubdomain').text
-            game['image'] = game_data.find('image').text.strip()
-            game['minplayers'] = game_data.find('minplayers').text
-            game['maxplayers'] = game_data.find('maxplayers').text
-            game['playingtime'] = game_data.find('playingtime').text
-        except NoneType as nt:
-            print(f"Missing attribute in game {game_id}")
-            raise nt
+        game['boardgamecategory'] = tex_or_none(game_data.find('boardgamecategory'))
+        game['boardgamesubdomain'] = tex_or_none(game_data.find('boardgamesubdomain'))
+        game['image'] = tex_or_none(game_data.find('image')).strip()
+        game['minplayers'] = tex_or_none(game_data.find('minplayers'))
+        game['maxplayers'] = tex_or_none(game_data.find('maxplayers'))
+        game['playingtime'] = tex_or_none(game_data.find('playingtime'))
 
     # Finally dump data as JSON
     print(f'\nWriting result to JSON:')
@@ -112,6 +108,13 @@ def parse_collection_row(collection_row):
     else:
         collection_item['plays'] = int(plays.a.text)
     return collection_item
+
+
+def tex_or_none(tag):
+    if tag is None:
+        return None
+    else:
+        return tag.text
 
 
 if __name__ == '__main__':

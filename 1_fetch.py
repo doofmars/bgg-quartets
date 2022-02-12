@@ -4,7 +4,7 @@ import os
 from types import NoneType
 
 import requests as req
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, Tag
 
 URL = "https://boardgamegeek.com/collection/user/Octavian?own=1"
 CACHE_DIRECTORY = 'cache'
@@ -69,6 +69,7 @@ def get_collection():
         game['minplayers'] = tex_or_none(game_data.find('minplayers'))
         game['maxplayers'] = tex_or_none(game_data.find('maxplayers'))
         game['playingtime'] = tex_or_none(game_data.find('playingtime'))
+        game['suggested_numplayers'] = parse_poll(game_data.find('poll', attrs={"name": "suggested_numplayers"}))
 
     # Finally dump data as JSON
     print(f'\nWriting result to JSON:')
@@ -115,6 +116,21 @@ def tex_or_none(tag):
         return None
     else:
         return tag.text
+
+
+def parse_poll(poll_data):
+    if poll_data is None:
+        return None
+    else:
+        poll = dict()
+        results = poll_data.find_all('results')
+        for result in results:
+            poll[result['numplayers']] = {
+                str(child['value']): child['numvotes']
+                for child in result.children
+                if isinstance(child, Tag)
+            }
+        return poll
 
 
 if __name__ == '__main__':

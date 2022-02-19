@@ -69,7 +69,11 @@ def get_collection():
         game['minplayers'] = tex_or_none(game_data.find('minplayers'))
         game['maxplayers'] = tex_or_none(game_data.find('maxplayers'))
         game['playingtime'] = tex_or_none(game_data.find('playingtime'))
-        game['suggested_numplayers'] = parse_poll(game_data.find('poll', attrs={"name": "suggested_numplayers"}))
+        suggested_numplayers = parse_poll(game_data.find('poll', attrs={"name": "suggested_numplayers"}))
+        game['best_minplayers'] = map_poll(suggested_numplayers, is_best)[0]
+        game['best_maxpleyers'] = map_poll(suggested_numplayers, is_best)[-1]
+        game['best_numplayers'] = map_poll(suggested_numplayers, is_best)
+        game['recommended_numplayers'] = map_poll(suggested_numplayers, is_recommended)
 
     # Finally dump data as JSON
     print(f'\nWriting result to JSON:')
@@ -109,6 +113,31 @@ def parse_collection_row(collection_row):
     else:
         collection_item['plays'] = int(plays.a.text)
     return collection_item
+
+
+def map_poll(poll, check):
+    """
+    Map the voting poll results dict to a list containing only voting options that pass the check
+    :param poll: The voting poll consisting of vote topic with recommendations by the community
+    :param check: Checking function to validate against
+    :return: None if nothing is recommended or a list of recommended player numbers.
+    """
+    try:
+        recommended = [vote_option for (vote_option, votes) in poll.items() if check(votes)]
+    except KeyError:
+        return [None]
+    if len(recommended) == 0:
+        return [None]
+    else:
+        return recommended
+
+
+def is_best(votes):
+    return int(votes['Best']) >= int(votes['Recommended']) + int(votes['Not Recommended'])
+
+
+def is_recommended(votes):
+    return int(votes['Best']) + int(votes['Recommended']) >= int(votes['Not Recommended'])
 
 
 def tex_or_none(tag):

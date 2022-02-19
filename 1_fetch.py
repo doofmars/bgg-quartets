@@ -96,11 +96,7 @@ def parse_collection_row(collection_row):
         collection_item['version'] = version.text.strip()
     collection_item['year'] = collection_row.find('span', class_='smallerfont').text[1:-1]
     collection_item['id'] = collection_row.find('a', class_='primary')['href'].split('/')[2]
-    user_rating = collection_row.find('div', class_='ratingtext')
-    if user_rating is None:
-        collection_item['user_rating'] = None
-    else:
-        collection_item['user_rating'] = user_rating.text
+    collection_item['user_rating'] = tex_or_none(collection_row.find('div', class_='ratingtext'))
     geek_rating = collection_row.find('td', class_='collection_bggrating').text.strip()
     if geek_rating == 'N/A':
         collection_item['geek_rating'] = None

@@ -63,8 +63,8 @@ def get_collection():
     for game in collection:
         game_id = game.get("id")
         game_data = load_data(f'https://boardgamegeek.com/xmlapi/boardgame/{game_id}?stats=1', f'{game_id}.xml')
-        game['boardgamecategory'] = tex_or_none(game_data.find('boardgamecategory'))
-        game['boardgamesubdomain'] = tex_or_none(game_data.find('boardgamesubdomain'))
+        game['boardgamecategory'] = [category.text for category in game_data.find_all('boardgamecategory')]
+        game['boardgamesubdomain'] = [domain.text for domain in game_data.find_all('boardgamesubdomain')]
         game['image'] = tex_or_none(game_data.find('image')).strip()
         game['minplayers'] = tex_or_none(game_data.find('minplayers'))
         game['maxplayers'] = tex_or_none(game_data.find('maxplayers'))

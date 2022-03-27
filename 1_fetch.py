@@ -1,14 +1,13 @@
 # coding=utf-8
 import json
 import os
+import configparser
 from types import NoneType
 
 import requests as req
 from bs4 import BeautifulSoup, Tag
 
-URL = "https://boardgamegeek.com/collection/user/Octavian?own=1"
-CACHE_DIRECTORY = 'cache'
-COLLECTION_FILE_KEY = 'collection'
+config = configparser.ConfigParser()
 
 
 def load_data(url, file_name):
@@ -18,9 +17,9 @@ def load_data(url, file_name):
     :param file_name: name of cached file
     :return: soup to parse
     """
-    if not os.path.exists(CACHE_DIRECTORY):
-        os.mkdir(CACHE_DIRECTORY)
-    collection_file = os.path.join(CACHE_DIRECTORY, file_name)
+    if not os.path.exists(config['fetch']['CACHE_DIRECTORY']):
+        os.mkdir(config['fetch']['CACHE_DIRECTORY'])
+    collection_file = os.path.join(config['fetch']['CACHE_DIRECTORY'], file_name)
     if not os.path.exists(collection_file):
         print(f'Reading {file_name} page from web')
         response = req.get(url)
@@ -44,7 +43,8 @@ def get_collection():
     """
 
     # Find table containing collection
-    collection_table = load_data(URL, file_name=f'{COLLECTION_FILE_KEY}.html').find(id='collectionitems')
+    collection_file_key = config['fetch']['COLLECTION_FILE_KEY']
+    collection_table = load_data(config['fetch']['URL'], file_name=f'{collection_file_key}.html').find(id='collectionitems')
     collection = list()
 
     # Iterate over collection table, store results to dict
@@ -77,7 +77,7 @@ def get_collection():
 
     # Finally dump data as JSON
     print(f'\nWriting result to JSON:')
-    with open(os.path.join(CACHE_DIRECTORY, f'{COLLECTION_FILE_KEY}.json'), 'w', encoding='UTF-8') as fp:
+    with open(os.path.join(config['fetch']['CACHE_DIRECTORY'], f'{collection_file_key}.json'), 'w', encoding='UTF-8') as fp:
         json.dump(collection, fp, indent=2)
 
     print(f'JSON file written to cache folder')
@@ -159,4 +159,5 @@ def parse_poll(poll_data):
 
 
 if __name__ == '__main__':
+    config.read("config.ini")
     get_collection()

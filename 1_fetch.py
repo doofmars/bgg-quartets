@@ -2,9 +2,9 @@
 import json
 import os
 import configparser
-from types import NoneType
 
 import requests as req
+# noinspection PyUnresolvedReferences
 from bs4 import BeautifulSoup, Tag
 
 config = configparser.ConfigParser()
@@ -77,7 +77,7 @@ def get_collection():
 
     # Finally dump data as JSON
     print(f'\nWriting result to JSON:')
-    with open(os.path.join(config['fetch']['CACHE_DIRECTORY'], f'{collection_file_key}.json'), 'w', encoding='UTF-8') as fp:
+    with open(os.path.join(config['fetch']['RESULT_DIRECTORY'], f'{collection_file_key}.json'), 'w', encoding='UTF-8') as fp:
         json.dump(collection, fp, indent=2)
 
     print(f'JSON file written to cache folder')

@@ -1,9 +1,10 @@
 import configparser
 import json
 import os
-import sys
 
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageFont
+
+CONVERSION_IN_MM = 25.4
 
 config = configparser.ConfigParser()
 
@@ -27,14 +28,40 @@ def load_data():
 
 
 def generate_cards():
+    generate_config = config['generate']
     collection = load_data()
     for game in collection:
-        render_as_card(game)
+        render_as_card(game, generate_config)
         break
 
 
-def render_as_card(game_data):
+def render_as_card(game_data, gen_config):
+    size = get_size(gen_config)
+    # create an image
+    out = Image.new('RGB', size, color=(255, 255, 255))
+
+    # get a font
+    fnt = ImageFont.truetype(gen_config['FONT'], 40)
+    # get a drawing context
+    d = ImageDraw.Draw(out)
+
+    # draw multiline text
+    d.multiline_text((10, 10), "Hello\nWorld", font=fnt, fill=(0, 0, 0))
+
+    out.show()
     pass
+
+
+def get_size(gen_config) -> tuple[int, int]:
+    """
+    Get size as tuple
+
+    :param gen_config: the generation config
+    :return: a tuple with rounded image size pixel values
+    """
+    x = round((int(gen_config['WIDTH']) + 2 * int(gen_config['BORDER'])) * (int(gen_config['DPI']) / CONVERSION_IN_MM))
+    y = round((int(gen_config['HEIGHT']) + 2 * int(gen_config['BORDER'])) * (int(gen_config['DPI']) / CONVERSION_IN_MM))
+    return x, y
 
 
 if __name__ == '__main__':

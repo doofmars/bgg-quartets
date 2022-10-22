@@ -1,11 +1,11 @@
 # coding=utf-8
 import json
-import os
 import configparser
+import os
+import csv
 
 import requests as req
-# noinspection PyUnresolvedReferences
-from bs4 import BeautifulSoup, Tag
+import xml.etree.ElementTree as ET
 
 config = configparser.ConfigParser()
 
@@ -26,15 +26,10 @@ def load_data(url, file_name):
         with open(collection_file, 'w', encoding='utf-8') as fp:
             fp.write(response.text)
             print(f'{file_name} saved to cache folder')
-        html = response.text
     else:
         print(f'Reading {file_name} from cache')
-        with open(collection_file, 'r', encoding='utf-8') as fp:
-            html = fp.read()
-    if file_name.endswith('html'):
-        return BeautifulSoup(html, 'html.parser')
-    if file_name.endswith('xml'):
-        return BeautifulSoup(html, 'lxml')
+
+    return ET.parse(collection_file)
 
 
 def get_collection():
@@ -44,120 +39,57 @@ def get_collection():
 
     # Find table containing collection
     collection_file_key = config['fetch']['COLLECTION_FILE_KEY']
-    collection_table = load_data(config['fetch']['URL'], file_name=f'{collection_file_key}.html').find(id='collectionitems')
-    collection = list()
+    url = f'https://boardgamegeek.com/xmlapi/collection/{config["fetch"]["user"]}?own=1'
+    collection = load_data(url, file_name=f'{collection_file_key}.xml')
 
-    # Iterate over collection table, store results to dict
-    first = True
-    for collection_row in collection_table.find_all('tr'):
-        # Skip header, we don't care about this
-        if first:
-            first = False
-            continue
-        # Append parsed collection row to collection list for later dumping
-        collection.append(parse_collection_row(collection_row))
-
-    print(f'Parsed {len(collection)} items, writing JSON file')
+    print(f'Parsed {len(collection.getroot().findall("item"))} items, writing JSON file')
+    csv_rows = []
 
     print(f'\nCollecting game data:')
-    for game in collection:
-        game_id = game.get("id")
+    for game in collection.getroot().findall('item'):
+        game_id = game.get("objectid")
         game_data = load_data(f'https://boardgamegeek.com/xmlapi/boardgame/{game_id}?stats=1', f'{game_id}.xml')
-        game['boardgamecategory'] = [category.text for category in game_data.find_all('boardgamecategory')]
-        game['boardgamesubdomain'] = [domain.text for domain in game_data.find_all('boardgamesubdomain')]
-        game['image'] = tex_or_none(game_data.find('image')).strip()
-        game['minplayers'] = tex_or_none(game_data.find('minplayers'))
-        game['maxplayers'] = tex_or_none(game_data.find('maxplayers'))
-        game['playingtime'] = tex_or_none(game_data.find('playingtime'))
-        suggested_numplayers = parse_poll(game_data.find('poll', attrs={"name": "suggested_numplayers"}))
-        game['best_minplayers'] = map_poll(suggested_numplayers, is_best)[0]
-        game['best_maxpleyers'] = map_poll(suggested_numplayers, is_best)[-1]
-        game['best_numplayers'] = map_poll(suggested_numplayers, is_best)
-        game['recommended_numplayers'] = map_poll(suggested_numplayers, is_recommended)
+        game.append(game_data.getroot().find('boardgame'))
+        csv_rows.append({
+            'id': game.get('objectid'),
+            'name': game.find('name').text,
+            'yearpublished': game.find('yearpublished').text,
+            'minplayers': game.find('stats').get('minplayers'),
+            'maxplayers': game.find('stats').get('maxplayers'),
+            'userrating': game.find('./stats/rating').get('value'),
+            'numplays': game.find('numplays').text,
+            'minplaytime': game.find('stats').get('minplaytime'),
+            'maxplaytime': game.find('stats').get('maxplaytime'),
+            'age': game.find('./boardgame/age').text,
+            'weight': game.find('./boardgame/statistics/ratings/averageweight').text,
+            'owned': game.find('./boardgame/statistics/ratings/owned').text,
+            'bgg_usersrated': game.find('./boardgame/statistics/ratings/usersrated').text,
+            'bgg_ratingavg': game.find('./boardgame/statistics/ratings/average').text,
+            'bgg_ratingbay': game.find('./boardgame/statistics/ratings/bayesaverage').text,
+            'image': game.find('image').text.strip(),
+        })
 
-    # Finally dump data as JSON
-    print(f'\nWriting result to JSON:')
-    with open(os.path.join(config['fetch']['RESULT_DIRECTORY'], f'{collection_file_key}.json'), 'w', encoding='UTF-8') as fp:
-        json.dump(collection, fp, indent=2)
+    # Finally dump combined data as XML
+    print(f'\nWriting result to XML:')
+    xml_file_path = os.path.join(config['fetch']['RESULT_DIRECTORY'], f'{collection_file_key}.xml')
+    with open(xml_file_path, 'wb') as fp:
+        collection.write(fp, encoding='UTF-8')
 
-    print(f'JSON file written to cache folder')
+    # Write card summary data as CSV
+    print(f'\nWriting result to CSV:')
+    csv_fields = []
+    for row in csv_rows:
+        for key in row.keys():
+            if key not in csv_fields:
+                csv_fields.append(key)
 
+    csv_file_path = os.path.join(config['fetch']['RESULT_DIRECTORY'], f'{collection_file_key}.csv')
+    with open(csv_file_path, 'w', encoding='UTF-8', newline='') as fp:
+        writer = csv.DictWriter(fp, csv_fields)
+        writer.writeheader()
+        writer.writerows(csv_rows)
 
-def parse_collection_row(collection_row):
-    """
-    Parse a single collection table row into a dict
-    :param collection_row: the row to parse
-    :return: a dictionary containing row values
-    """
-    collection_item = dict()
-    collection_item['name'] = collection_row.find('a', class_='primary').text
-    version = collection_row.find('div', class_='geekitem_name')
-    if version is not None:
-        collection_item['version'] = version.text.strip()
-    year = collection_row.find('span', class_='smallerfont')
-    if year is not None:
-        collection_item['year'] = year.text[1:-1]
-    collection_item['id'] = collection_row.find('a', class_='primary')['href'].split('/')[2]
-    collection_item['user_rating'] = tex_or_none(collection_row.find('div', class_='ratingtext'))
-    geek_rating = collection_row.find('td', class_='collection_bggrating').text.strip()
-    if geek_rating == 'N/A':
-        collection_item['geek_rating'] = None
-    else:
-        collection_item['geek_rating'] = geek_rating
-    collection_item['status'] = collection_row.find('td', class_='collection_status').text.strip()
-    plays = collection_row.find('td', class_='collection_plays')
-    if plays.a is None:
-        collection_item['plays'] = 0
-    else:
-        collection_item['plays'] = int(plays.a.text)
-    return collection_item
-
-
-def map_poll(poll, check):
-    """
-    Map the voting poll results dict to a list containing only voting options that pass the check
-    :param poll: The voting poll consisting of vote topic with recommendations by the community
-    :param check: Checking function to validate against
-    :return: None if nothing is recommended or a list of recommended player numbers.
-    """
-    try:
-        recommended = [vote_option for (vote_option, votes) in poll.items() if check(votes)]
-    except KeyError:
-        return [None]
-    if len(recommended) == 0:
-        return [None]
-    else:
-        return recommended
-
-
-def is_best(votes):
-    return int(votes['Best']) >= int(votes['Recommended']) + int(votes['Not Recommended'])
-
-
-def is_recommended(votes):
-    return int(votes['Best']) + int(votes['Recommended']) >= int(votes['Not Recommended'])
-
-
-def tex_or_none(tag):
-    if tag is None:
-        return None
-    else:
-        return tag.text
-
-
-def parse_poll(poll_data):
-    if poll_data is None:
-        return None
-    else:
-        poll = dict()
-        results = poll_data.find_all('results')
-        for result in results:
-            poll[result['numplayers']] = {
-                str(child['value']): child['numvotes']
-                for child in result.children
-                if isinstance(child, Tag)
-            }
-        return poll
+    print(f'CSV file written to cache folder')
 
 
 if __name__ == '__main__':

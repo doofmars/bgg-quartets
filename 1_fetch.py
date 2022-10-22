@@ -50,7 +50,7 @@ def get_collection():
         game_id = game.get("objectid")
         game_data = load_data(f'https://boardgamegeek.com/xmlapi/boardgame/{game_id}?stats=1', f'{game_id}.xml')
         game.append(game_data.getroot().find('boardgame'))
-        csv_rows.append({
+        csv_row = {
             'id': game.get('objectid'),
             'name': game.find('name').text,
             'yearpublished': game.find('yearpublished').text,
@@ -67,7 +67,15 @@ def get_collection():
             'bgg_ratingavg': game.find('./boardgame/statistics/ratings/average').text,
             'bgg_ratingbay': game.find('./boardgame/statistics/ratings/bayesaverage').text,
             'image': game.find('image').text.strip(),
-        })
+        }
+
+        categories_dict = {}
+        categories = game.findall('./boardgame/boardgamecategory')
+        for category in categories:
+            categories_dict[f'c_{category.text}'] = 'x'
+
+        csv_row.update(categories_dict)
+        csv_rows.append(csv_row)
 
     # Finally dump combined data as XML
     print(f'\nWriting result to XML:')

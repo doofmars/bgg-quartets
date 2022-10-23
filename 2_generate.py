@@ -1,6 +1,6 @@
 import configparser
-import json
 import os
+import xml.etree.ElementTree as ET
 
 from PIL import Image, ImageDraw, ImageFont
 
@@ -18,19 +18,18 @@ def load_data():
     if not os.path.exists(config['generate']['CARD_CACHE']):
         os.mkdir(config['generate']['CARD_CACHE'])
     collection_file_key = config['fetch']['COLLECTION_FILE_KEY']
-    collection_file = os.path.join(config['fetch']['RESULT_DIRECTORY'], f'{collection_file_key}.json')
+    collection_file = os.path.join(config['fetch']['RESULT_DIRECTORY'], f'{collection_file_key}.xml')
     if not os.path.exists(collection_file):
         raise FileNotFoundError('Missing collection_file')
     else:
         print(f'Reading {collection_file} from cache')
-        with open(collection_file, 'r', encoding='utf-8') as fp:
-            return json.load(fp)
+    return ET.parse(collection_file)
 
 
 def generate_cards():
     generate_config = config['generate']
     collection = load_data()
-    for game in collection:
+    for game in collection.getroot().findall('item'):
         render_as_card(game, generate_config)
         break
 

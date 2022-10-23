@@ -53,6 +53,7 @@ def get_collection():
         csv_row = {
             'id': game.get('objectid'),
             'name': game.find('name').text,
+            'rank': game.find('./boardgame/statistics/ratings/ranks/rank[@name="boardgame"]').get('value'),
             'yearpublished': game.find('yearpublished').text,
             'minplayers': game.find('stats').get('minplayers'),
             'maxplayers': game.find('stats').get('maxplayers'),

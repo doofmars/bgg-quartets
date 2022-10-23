@@ -35,32 +35,38 @@ def generate_cards():
 
 
 def render_as_card(game_data, gen_config):
-    size = get_size(gen_config)
+    dpi = int(gen_config['DPI'])
+    width = get_length_with_dpi(gen_config['WIDTH'], dpi)
+    height = get_length_with_dpi(gen_config['HEIGHT'], dpi)
+    cut_border = get_length_with_dpi(gen_config['CUT_BORDER'], dpi)
+    card_border = get_length_with_dpi(gen_config['CARD_BORDER'], dpi)
     # create an image
-    out = Image.new('RGB', size, color=(255, 255, 255))
+    out = Image.new('RGB', (width + 2 * cut_border, height + 2 * cut_border), color=(255, 255, 255))
 
     # get a font
     fnt = ImageFont.truetype(gen_config['FONT'], 40)
     # get a drawing context
     d = ImageDraw.Draw(out)
+    d.rounded_rectangle((cut_border, cut_border, width + cut_border, height + cut_border),
+                        radius=get_length_with_dpi(5, dpi), width=1, outline=(200, 200, 200))
+    d.rounded_rectangle((cut_border + card_border, cut_border + card_border,
+                         width + cut_border - card_border, height + cut_border - card_border),
+                        radius=get_length_with_dpi(3, dpi), width=1, outline=(200, 200, 200))
 
     # draw multiline text
-    d.multiline_text((10, 10), "Hello\nWorld", font=fnt, fill=(0, 0, 0))
-
-    out.show()
+    out.save('test.png', dpi=(dpi, dpi))
     pass
 
 
-def get_size(gen_config) -> tuple[int, int]:
+def get_length_with_dpi(length, dpi) -> int:
     """
-    Get size as tuple
+    Get the length in pixeln converted by dpi
 
-    :param gen_config: the generation config
-    :return: a tuple with rounded image size pixel values
+    :param length: input length in mm
+    :param dpi: the file dpi used for conversion
+    :return: pixel appropriation to the given dpi value
     """
-    x = round((int(gen_config['WIDTH']) + 2 * int(gen_config['BORDER'])) * (int(gen_config['DPI']) / CONVERSION_IN_MM))
-    y = round((int(gen_config['HEIGHT']) + 2 * int(gen_config['BORDER'])) * (int(gen_config['DPI']) / CONVERSION_IN_MM))
-    return x, y
+    return round(int(length) * (int(dpi) / CONVERSION_IN_MM))
 
 
 if __name__ == '__main__':

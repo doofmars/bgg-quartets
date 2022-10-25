@@ -34,7 +34,7 @@ def generate_cards():
         break
 
 
-def render_as_card(game_data, gen_config):
+def render_as_card(game, gen_config):
     dpi = int(gen_config['DPI'])
     width = get_length_with_dpi(gen_config['WIDTH'], dpi)
     height = get_length_with_dpi(gen_config['HEIGHT'], dpi)
@@ -54,6 +54,19 @@ def render_as_card(game_data, gen_config):
                         radius=get_length_with_dpi(3, dpi), width=1, outline=(200, 200, 200))
 
     # draw multiline text
+    d.text((200, 600), game.find('name').text, font=fnt, fill=(0, 0, 0))
+
+    d.text((120, 680), game.find('yearpublished').text, font=fnt, fill=(0, 0, 0))
+    d.text((120, 760), f"{game.find('stats').get('minplaytime')}-{game.find('stats').get('maxplaytime')}", font=fnt, fill=(0, 0, 0))
+    d.text((120, 840), game.find('./boardgame/statistics/ratings/average').text, font=fnt, fill=(0, 0, 0))
+    d.text((120, 920), game.find('./boardgame/statistics/ratings/owned').text, font=fnt, fill=(0, 0, 0))
+    d.text((120, 1000), game.find('./boardgame/statistics/ratings/averageweight').text, font=fnt, fill=(0, 0, 0))
+
+    d.text((450, 680), f"{game.find('stats').get('minplayers')}-{game.find('stats').get('maxplayers')}", font=fnt, fill=(0, 0, 0))
+    d.text((450, 760), game.find('./boardgame/age').text, font=fnt, fill=(0, 0, 0))
+    d.text((450, 840), game.find('./stats/rating').get('value'), font=fnt, fill=(0, 0, 0))
+    d.text((450, 920), game.find('numplays').text, font=fnt, fill=(0, 0, 0))
+    d.text((450, 1000), game.find('yearpublished').text, font=fnt, fill=(0, 0, 0))
     out.save('test.png', dpi=(dpi, dpi))
     pass
 

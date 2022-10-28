@@ -61,6 +61,7 @@ def render_as_card(game, gen_config):
     cut_border = dpi(gen_config['CUT_BORDER'])
     card_border = dpi(gen_config['CARD_BORDER'])
     # create an image
+    game_id = game.get('objectid')
     out = Image.new('RGB', (width + 2 * cut_border, height + 2 * cut_border), color=(255, 255, 255))
 
     # get a font
@@ -68,7 +69,7 @@ def render_as_card(game, gen_config):
     # get a drawing context
 
     # Fetch and add image
-    image_path = fetch_image(game.get("objectid"), game.find('image').text)
+    image_path = fetch_image(game_id, game.find('image').text)
     game_image = Image.open(image_path).resize((dpi(49), dpi(38)))
 
     out.paste(game_image, (dpi(8), dpi(14)))
@@ -94,7 +95,9 @@ def render_as_card(game, gen_config):
     d.text((dpi(35), dpi(70)), game.find('./stats/rating').get('value'), font=fnt, fill=(0, 0, 0))
     d.text((dpi(35), dpi(76)), game.find('numplays').text, font=fnt, fill=(0, 0, 0))
     d.text((dpi(35), dpi(82)), game.find('yearpublished').text, font=fnt, fill=(0, 0, 0))
-    out.save('test.png')
+    card_path = os.path.join(gen_config['CARD_CACHE'], f'{game_id}.png')
+    out.save(card_path)
+    print(f'Created card for game {game_id} in {card_path}')
     pass
 
 

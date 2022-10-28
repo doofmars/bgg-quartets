@@ -56,58 +56,57 @@ def fetch_image(id, url):
 
 
 def render_as_card(game, gen_config):
-    dpi = int(gen_config['DPI'])
-    width = get_length_with_dpi(gen_config['WIDTH'], dpi)
-    height = get_length_with_dpi(gen_config['HEIGHT'], dpi)
-    cut_border = get_length_with_dpi(gen_config['CUT_BORDER'], dpi)
-    card_border = get_length_with_dpi(gen_config['CARD_BORDER'], dpi)
+    width = dpi(gen_config['WIDTH'])
+    height = dpi(gen_config['HEIGHT'])
+    cut_border = dpi(gen_config['CUT_BORDER'])
+    card_border = dpi(gen_config['CARD_BORDER'])
     # create an image
     out = Image.new('RGB', (width + 2 * cut_border, height + 2 * cut_border), color=(255, 255, 255))
 
     # get a font
-    fnt = ImageFont.truetype(gen_config['FONT'], 40)
+    fnt = ImageFont.truetype(gen_config['FONT'], dpi(4))
     # get a drawing context
 
     # Fetch and add image
     image_path = fetch_image(game.get("objectid"), game.find('image').text)
-    game_image = Image.open(image_path).resize((100, 100))
+    game_image = Image.open(image_path).resize((dpi(49), dpi(38)))
 
-    out.paste(game_image, (100, 170))
+    out.paste(game_image, (dpi(8), dpi(14)))
 
     d = ImageDraw.Draw(out)
     d.rounded_rectangle((cut_border, cut_border, width + cut_border, height + cut_border),
-                        radius=get_length_with_dpi(5, dpi), width=1, outline=(200, 200, 200))
+                        radius=dpi(5), width=1, outline=(200, 200, 200))
     d.rounded_rectangle((cut_border + card_border, cut_border + card_border,
                          width + cut_border - card_border, height + cut_border - card_border),
-                        radius=get_length_with_dpi(3, dpi), width=1, outline=(200, 200, 200))
+                        radius=dpi(3), width=1, outline=(200, 200, 200))
 
     # draw multiline text
-    d.text((200, 600), game.find('name').text, font=fnt, fill=(0, 0, 0))
+    d.text((dpi(9), dpi(52)), game.find('name').text, font=fnt, fill=(0, 0, 0))
 
-    d.text((120, 680), game.find('yearpublished').text, font=fnt, fill=(0, 0, 0))
-    d.text((120, 760), f"{game.find('stats').get('minplaytime')}-{game.find('stats').get('maxplaytime')}", font=fnt, fill=(0, 0, 0))
-    d.text((120, 840), game.find('./boardgame/statistics/ratings/average').text, font=fnt, fill=(0, 0, 0))
-    d.text((120, 920), game.find('./boardgame/statistics/ratings/owned').text, font=fnt, fill=(0, 0, 0))
-    d.text((120, 1000), game.find('./boardgame/statistics/ratings/averageweight').text, font=fnt, fill=(0, 0, 0))
+    d.text((dpi(10), dpi(58)), game.find('yearpublished').text, font=fnt, fill=(0, 0, 0))
+    d.text((dpi(10), dpi(64)), f"{game.find('stats').get('minplaytime')}-{game.find('stats').get('maxplaytime')}", font=fnt, fill=(0, 0, 0))
+    d.text((dpi(10), dpi(70)), game.find('./boardgame/statistics/ratings/average').text, font=fnt, fill=(0, 0, 0))
+    d.text((dpi(10), dpi(76)), game.find('./boardgame/statistics/ratings/owned').text, font=fnt, fill=(0, 0, 0))
+    d.text((dpi(10), dpi(82)), game.find('./boardgame/statistics/ratings/averageweight').text, font=fnt, fill=(0, 0, 0))
 
-    d.text((450, 680), f"{game.find('stats').get('minplayers')}-{game.find('stats').get('maxplayers')}", font=fnt, fill=(0, 0, 0))
-    d.text((450, 760), game.find('./boardgame/age').text, font=fnt, fill=(0, 0, 0))
-    d.text((450, 840), game.find('./stats/rating').get('value'), font=fnt, fill=(0, 0, 0))
-    d.text((450, 920), game.find('numplays').text, font=fnt, fill=(0, 0, 0))
-    d.text((450, 1000), game.find('yearpublished').text, font=fnt, fill=(0, 0, 0))
-    out.save('test.png', dpi=(dpi, dpi))
+    d.text((dpi(35), dpi(58)), f"{game.find('stats').get('minplayers')}-{game.find('stats').get('maxplayers')}", font=fnt, fill=(0, 0, 0))
+    d.text((dpi(35), dpi(64)), game.find('./boardgame/age').text, font=fnt, fill=(0, 0, 0))
+    d.text((dpi(35), dpi(70)), game.find('./stats/rating').get('value'), font=fnt, fill=(0, 0, 0))
+    d.text((dpi(35), dpi(76)), game.find('numplays').text, font=fnt, fill=(0, 0, 0))
+    d.text((dpi(35), dpi(82)), game.find('yearpublished').text, font=fnt, fill=(0, 0, 0))
+    out.save('test.png')
     pass
 
 
-def get_length_with_dpi(length, dpi) -> int:
+def dpi(length) -> int:
     """
     Get the length in pixeln converted by dpi
 
     :param length: input length in mm
-    :param dpi: the file dpi used for conversion
     :return: pixel appropriation to the given dpi value
     """
-    return round(int(length) * (int(dpi) / CONVERSION_IN_MM))
+    dpi_value = int(config['generate']['DPI'])
+    return round(int(length) * (int(dpi_value) / CONVERSION_IN_MM))
 
 
 if __name__ == '__main__':

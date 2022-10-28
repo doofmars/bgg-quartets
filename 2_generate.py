@@ -1,6 +1,8 @@
 import configparser
 import os
+import shutil
 import xml.etree.ElementTree as ET
+import requests
 
 from PIL import Image, ImageDraw, ImageFont
 
@@ -17,6 +19,8 @@ def load_data():
     """
     if not os.path.exists(config['generate']['CARD_CACHE']):
         os.mkdir(config['generate']['CARD_CACHE'])
+    if not os.path.exists(config['fetch']['IMAGE_CACHE_DIRECTORY']):
+        os.mkdir(config['fetch']['IMAGE_CACHE_DIRECTORY'])
     collection_file_key = config['fetch']['COLLECTION_FILE_KEY']
     collection_file = os.path.join(config['fetch']['RESULT_DIRECTORY'], f'{collection_file_key}.xml')
     if not os.path.exists(collection_file):
@@ -34,6 +38,23 @@ def generate_cards():
         break
 
 
+def fetch_image(id, url):
+    image_path = os.path.join(config['fetch']['IMAGE_CACHE_DIRECTORY'], f"{id}.jpeg")
+    if os.path.exists(image_path):
+        print(f'Image for game {id} is already cached')
+        return image_path
+    else:
+        print('Fetching image from web')
+        res = requests.get(url, stream=True)
+        if res.status_code == 200:
+            with open(image_path, 'wb') as image:
+                shutil.copyfileobj(res.raw, image)
+            return image_path
+        else:
+            print(f'Failed to fetch image with id {id} from {url}')
+            exit()
+
+
 def render_as_card(game, gen_config):
     dpi = int(gen_config['DPI'])
     width = get_length_with_dpi(gen_config['WIDTH'], dpi)
@@ -46,6 +67,13 @@ def render_as_card(game, gen_config):
     # get a font
     fnt = ImageFont.truetype(gen_config['FONT'], 40)
     # get a drawing context
+
+    # Fetch and add image
+    image_path = fetch_image(game.get("objectid"), game.find('image').text)
+    game_image = Image.open(image_path).resize((100, 100))
+
+    out.paste(game_image, (100, 170))
+
     d = ImageDraw.Draw(out)
     d.rounded_rectangle((cut_border, cut_border, width + cut_border, height + cut_border),
                         radius=get_length_with_dpi(5, dpi), width=1, outline=(200, 200, 200))

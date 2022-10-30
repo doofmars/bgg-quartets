@@ -3,8 +3,9 @@ import os
 import shutil
 import xml.etree.ElementTree as ET
 import requests
+from ruamel.yaml import YAML
 
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw, ImageFont, ImageColor
 
 CONVERSION_IN_MM = 25.4
 
@@ -30,12 +31,31 @@ def load_data():
     return ET.parse(collection_file)
 
 
+def get_selection(selection_file):
+    yaml = YAML(typ='safe')
+    selected_games = []
+    with open(selection_file, 'r') as fp:
+        groups = yaml.load(fp)['groups']
+        for group in groups:
+            for game in group['games']:
+                selected_games.append({'id': game,
+                                       'group': group['name'],
+                                       'color': group['color']})
+    return selected_games
+
+
 def generate_cards():
     generate_config = config['generate']
+    card_selection = get_selection(generate_config['SELECTION'])
     collection = load_data()
-    for game in collection.getroot().findall('item'):
-        render_as_card(game, generate_config)
-        break
+    for card_config in card_selection:
+        game_id = card_config["id"]
+        game = collection.getroot().find(f'item[@objectid="{game_id}"]')
+        if game is not None:
+            render_as_card(game, card_config, generate_config)
+        else:
+            print(f'Failed to find game with id {game_id} in collection')
+            exit(1)
 
 
 def fetch_image(id, url):
@@ -52,34 +72,33 @@ def fetch_image(id, url):
             return image_path
         else:
             print(f'Failed to fetch image with id {id} from {url}')
-            exit()
+            exit(1)
 
 
-def render_as_card(game, gen_config):
+def render_as_card(game, card_config, gen_config):
     width = dpi(gen_config['WIDTH'])
     height = dpi(gen_config['HEIGHT'])
     cut_border = dpi(gen_config['CUT_BORDER'])
     card_border = dpi(gen_config['CARD_BORDER'])
-    # create an image
     game_id = game.get('objectid')
+
+    # create an image
     out = Image.new('RGB', (width + 2 * cut_border, height + 2 * cut_border), color=(255, 255, 255))
 
     # get a font
     fnt = ImageFont.truetype(gen_config['FONT'], dpi(4))
-    # get a drawing context
 
     # Fetch and add image
     image_path = fetch_image(game_id, game.find('image').text)
     game_image = Image.open(image_path).resize((dpi(49), dpi(38)))
 
-    out.paste(game_image, (dpi(8), dpi(14)))
-
+    # get a drawing context
     d = ImageDraw.Draw(out)
     d.rounded_rectangle((cut_border, cut_border, width + cut_border, height + cut_border),
                         radius=dpi(5), width=1, outline=(200, 200, 200))
     d.rounded_rectangle((cut_border + card_border, cut_border + card_border,
                          width + cut_border - card_border, height + cut_border - card_border),
-                        radius=dpi(3), width=1, outline=(200, 200, 200))
+                        radius=dpi(3), width=1, fill=ImageColor.getrgb(card_config['color']))
 
     # draw multiline text
     d.text((dpi(9), dpi(52)), game.find('name').text, font=fnt, fill=(0, 0, 0))
@@ -96,9 +115,13 @@ def render_as_card(game, gen_config):
     d.text((dpi(35), dpi(76)), game.find('numplays').text, font=fnt, fill=(0, 0, 0))
     d.text((dpi(35), dpi(82)), game.find('yearpublished').text, font=fnt, fill=(0, 0, 0))
     card_path = os.path.join(gen_config['CARD_CACHE'], f'{game_id}.png')
+    # Add the game image
+    out.paste(game_image, (dpi(8), dpi(14)))
+
+    # Save results
     out.save(card_path)
     print(f'Created card for game {game_id} in {card_path}')
-    pass
+
 
 
 def dpi(length) -> int:

@@ -18,7 +18,7 @@ def load_data(url, file_name):
     :return: soup to parse
     """
     if not os.path.exists(config['fetch']['CACHE_DIRECTORY']):
-        os.mkdir(config['fetch']['CACHE_DIRECTORY'])
+        os.makedirs(config['fetch']['CACHE_DIRECTORY'])
     collection_file = os.path.join(config['fetch']['CACHE_DIRECTORY'], file_name)
     if not os.path.exists(collection_file):
         print(f'Reading {file_name} page from web')

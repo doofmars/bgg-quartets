@@ -1,6 +1,8 @@
 bgg-quartets
 ------------
-A Board Game Geek powered Quartets generator, collect your collection 
+A Board Game Geek powered Quartets generator, collect your collection
+
+<img src="resources/sample.png" alt="sample image" width="300"/>
 
 Setup, create venv, install requirements and start the scripts
 

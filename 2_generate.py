@@ -67,14 +67,25 @@ def generate_cards():
     generate_config = config['generate']
     card_selection = get_selection(generate_config['SELECTION'])
     collection = load_data()
+    long_names = {}
     for card_config in card_selection:
-        game_id = card_config["id"]
+        game_id = list(card_config["id"].keys())[0]
+        game_name = list(card_config["id"].values())[0]
+
         game = collection.getroot().find(f'item[@objectid="{game_id}"]')
         if game is not None:
-            threading.Thread(target=render_as_card, args=(game, card_config, generate_config)).start()
+            if game_name is None:
+                game_name = game.find('name').text
+                if len(game_name) > 25:
+                    long_names[game_id] = game_name
+            threading.Thread(target=render_as_card, args=(game, game_name, card_config, generate_config)).start()
         else:
             print(f'Failed to find game with id {game_id} in collection')
             exit(1)
+    if long_names:
+        print('Warning, detected long game names:')
+        for game_id, game_name in long_names.items():
+            print(f'{game_id}: {game_name}')
 
 
 def fetch_image(id, url):
@@ -120,7 +131,7 @@ def compact_number(number: int) -> str:
         return f'{number // 1000000}M'
 
 
-def render_as_card(game, card_config, gen_config):
+def render_as_card(game, game_name, card_config, gen_config):
     """
     Render a game as a card
 
@@ -173,7 +184,7 @@ def render_as_card(game, card_config, gen_config):
     d.text((dpi(20), dpi(8)), card_config['category'], font=fnt, fill=(255, 255, 255))
 
     # draw multiline text
-    d.text((dpi(10), dpi(52.3)), game.find('name').text, font=fnt, fill=(0, 0, 0))
+    d.text((dpi(10), dpi(52.3)), game_name, font=fnt, fill=(0, 0, 0))
 
     # Draw game stats for the left side
     d.text((dpi(14), dpi(58)), game.find('yearpublished').text, font=fnt, fill=(0, 0, 0))

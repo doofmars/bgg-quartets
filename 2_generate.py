@@ -12,17 +12,17 @@ CONVERSION_IN_MM = 25.4
 config = configparser.ConfigParser()
 
 ICONS = [
-    ('iconmonstr-calendar-4-240.png', 9, 59),
-    ('iconmonstr-time-13-240.png', 9, 65),
-    ('iconmonstr-star-half-lined-240.png', 9, 71),
-    ('iconmonstr-product-14-240.png', 9, 77),
-    ('flaticon-weight.png', 9, 83),
+    ('iconmonstr-calendar-4-240.png', 10, 59),
+    ('iconmonstr-time-13-240.png', 10, 65),
+    ('iconmonstr-star-half-lined-240.png', 10, 71),
+    ('iconmonstr-product-14-240.png', 10, 77),
+    ('flaticon-weight.png', 10, 83),
 
-    ('iconmonstr-user-29-240.png', 33, 59),
-    ('iconmonstr-user-23-240.png', 33, 65),
-    ('flaticon-age-group.png', 33, 71),
-    ('iconmonstr-thumb-14-240.png', 33, 77),
-    ('iconmonstr-video-15-240.png', 33, 83),
+    ('iconmonstr-user-29-240.png', 34, 59),
+    ('iconmonstr-user-23-240.png', 34, 65),
+    ('flaticon-age-group.png', 34, 71),
+    ('iconmonstr-thumb-14-240.png', 34, 77),
+    ('iconmonstr-video-15-240.png', 34, 83),
 ]
 
 
@@ -126,17 +126,17 @@ def render_as_card(game, card_config, gen_config):
     # draw multiline text
     d.text((dpi(9), dpi(52)), game.find('name').text, font=fnt, fill=(0, 0, 0))
 
-    d.text((dpi(13), dpi(58)), game.find('yearpublished').text, font=fnt, fill=(0, 0, 0))
-    d.text((dpi(13), dpi(64)), f"{game.find('stats').get('minplaytime')}-{game.find('stats').get('maxplaytime')}", font=fnt, fill=(0, 0, 0))
-    d.text((dpi(13), dpi(70)), game.find('./boardgame/statistics/ratings/average').text, font=fnt, fill=(0, 0, 0))
-    d.text((dpi(13), dpi(76)), game.find('./boardgame/statistics/ratings/owned').text, font=fnt, fill=(0, 0, 0))
-    d.text((dpi(13), dpi(82)), game.find('./boardgame/statistics/ratings/averageweight').text, font=fnt, fill=(0, 0, 0))
+    d.text((dpi(14), dpi(58)), game.find('yearpublished').text, font=fnt, fill=(0, 0, 0))
+    d.text((dpi(14), dpi(64)), f"{game.find('stats').get('minplaytime')}-{game.find('stats').get('maxplaytime')}", font=fnt, fill=(0, 0, 0))
+    d.text((dpi(14), dpi(70)), game.find('./boardgame/statistics/ratings/average').text, font=fnt, fill=(0, 0, 0))
+    d.text((dpi(14), dpi(76)), game.find('./boardgame/statistics/ratings/owned').text, font=fnt, fill=(0, 0, 0))
+    d.text((dpi(14), dpi(82)), game.find('./boardgame/statistics/ratings/averageweight').text, font=fnt, fill=(0, 0, 0))
 
-    d.text((dpi(37), dpi(58)), f"{game.find('stats').get('minplayers')}-{game.find('stats').get('maxplayers')}", font=fnt, fill=(0, 0, 0))
-    d.text((dpi(37), dpi(64)), game.find('./boardgame/poll[@name="suggested_numplayers"]').get('totalvotes'), font=fnt, fill=(0, 0, 0))
-    d.text((dpi(37), dpi(70)), game.find('./boardgame/age').text, font=fnt, fill=(0, 0, 0))
-    d.text((dpi(37), dpi(76)), game.find('./stats/rating').get('value'), font=fnt, fill=(0, 0, 0))
-    d.text((dpi(37), dpi(82)), game.find('numplays').text, font=fnt, fill=(0, 0, 0))
+    d.text((dpi(38), dpi(58)), f"{game.find('stats').get('minplayers')}-{game.find('stats').get('maxplayers')}", font=fnt, fill=(0, 0, 0))
+    d.text((dpi(38), dpi(64)), game.find('./boardgame/poll[@name="suggested_numplayers"]').get('totalvotes'), font=fnt, fill=(0, 0, 0))
+    d.text((dpi(38), dpi(70)), game.find('./boardgame/age').text, font=fnt, fill=(0, 0, 0))
+    d.text((dpi(38), dpi(76)), game.find('./stats/rating').get('value'), font=fnt, fill=(0, 0, 0))
+    d.text((dpi(38), dpi(82)), game.find('numplays').text, font=fnt, fill=(0, 0, 0))
     card_path = os.path.join(gen_config['CARD_CACHE'], f'{game_id}.png')
     # Add the game image
     out.paste(game_image, (int(width / 2 - game_image.width / 2), dpi(14)))

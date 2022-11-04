@@ -17,7 +17,7 @@ ICONS = [
     ('iconmonstr-time-13-240.png', 10, 65),
     ('iconmonstr-star-half-lined-240.png', 10, 71),
     ('iconmonstr-product-14-240.png', 10, 77),
-    ('flaticon-weight.png', 10, 83),
+    ('flaticon-problem.png', 10, 83),
 
     ('iconmonstr-user-29-240.png', 36, 59),
     ('iconmonstr-user-23-240.png', 36, 65),

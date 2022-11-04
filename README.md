@@ -20,6 +20,7 @@ Icons used:
 
  - <a href="https://www.flaticon.com/free-icons/age-group" title="age group icons">Age group icons created by Freepik - Flaticon</a>
  - <a href="https://www.flaticon.com/free-icons/weight" title="weight icons">Weight icons created by Freepik - Flaticon</a>
+ - <a href="https://www.flaticon.com/free-icons/complex" title="complex icons">Complex icons created by Freepik - Flaticon</a>
  - https://iconmonstr.com/calendar-4-png
  - https://iconmonstr.com/product-14-png
  - https://iconmonstr.com/star-half-lined-png

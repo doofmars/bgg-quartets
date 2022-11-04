@@ -1,6 +1,7 @@
 import configparser
 import os
 import shutil
+import threading
 import xml.etree.ElementTree as ET
 import requests
 from ruamel.yaml import YAML
@@ -70,7 +71,7 @@ def generate_cards():
         game_id = card_config["id"]
         game = collection.getroot().find(f'item[@objectid="{game_id}"]')
         if game is not None:
-            render_as_card(game, card_config, generate_config)
+            threading.Thread(target=render_as_card, args=(game, card_config, generate_config)).start()
         else:
             print(f'Failed to find game with id {game_id} in collection')
             exit(1)
@@ -79,7 +80,6 @@ def generate_cards():
 def fetch_image(id, url):
     image_path = os.path.join(config['fetch']['IMAGE_CACHE_DIRECTORY'], f"{id}.jpeg")
     if os.path.exists(image_path):
-        print(f'Image for game {id} is already cached')
         return image_path
     else:
         print('Fetching image from web')

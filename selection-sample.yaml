@@ -1,34 +1,44 @@
 groups:
   - name: A
+    category: Most played
     color: "#F44336"
+    top-color: "#c62828"
     games:
       - 174430
       - 224517
       - 161936
       - 342942
   - name: B
+    category: Most played
     color: "#FDD835"
+    top-color: "#f9a825"
     games:
       - 167791
       - 233078
       - 291457
       - 187645
   - name: C
+    category: Most played
     color: "#4CAF50"
+    top-color: "#388e3c"
     games:
       - 220308
       - 115746
       - 162886
       - 182028
   - name: D
+    category: Most played
     color: "#03A9F4"
+    top-color: "#0288d1"
     games:
       - 193738
       - 12333
       - 316554
       - 169786
   - name: E
+    category: Most played
     color: "#CDDC39"
+    top-color: "#9e9d24"
     games:
       - 84876
       - 173346

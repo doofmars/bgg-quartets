@@ -51,9 +51,13 @@ def get_selection(selection_file):
     with open(selection_file, 'r') as fp:
         groups = yaml.load(fp)['groups']
         for group in groups:
-            for game in group['games']:
+            # loop over grops with index
+            for index, game in enumerate(group['games']):
                 selected_games.append({'id': game,
+                                       'index': index,
                                        'group': group['name'],
+                                       'category': group['category'],
+                                       'top-color': group['top-color'],
                                        'color': group['color']})
     return selected_games
 
@@ -130,6 +134,16 @@ def render_as_card(game, card_config, gen_config):
     # Create backdrop for game stats
     add_boxes(d, dpi(9), dpi(58), dpi(30), dpi(5), dpi(6), 5, gen_config['BOX_COLOR'])
     add_boxes(d, dpi(35), dpi(58), dpi(56), dpi(5), dpi(6), 5, gen_config['BOX_COLOR'])
+
+    # Create backdrop for header
+    d.rounded_rectangle((cut_border + card_border, cut_border + card_border, print_width + cut_border - card_border, dpi(20)),
+                        fill=ImageColor.getrgb(card_config['top-color']), radius=dpi(3))
+    d.rectangle((cut_border + card_border, dpi(13), print_width + cut_border - card_border, dpi(20)),
+                fill=ImageColor.getrgb(card_config['color']))
+
+    # Render header card
+    d.text((dpi(10), dpi(8)), f"{card_config['group']}{card_config['index']}", font=fnt, fill=(255, 255, 255))
+    d.text((dpi(20), dpi(8)), card_config['category'], font=fnt, fill=(255, 255, 255))
 
     # draw multiline text
     d.text((dpi(10), dpi(52.3)), game.find('name').text, font=fnt, fill=(0, 0, 0))

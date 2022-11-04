@@ -76,28 +76,30 @@ def fetch_image(id, url):
 
 
 def render_as_card(game, card_config, gen_config):
-    width = dpi(gen_config['WIDTH'])
-    height = dpi(gen_config['HEIGHT'])
+    print_width = dpi(gen_config['WIDTH'])
+    print_height = dpi(gen_config['HEIGHT'])
     cut_border = dpi(gen_config['CUT_BORDER'])
     card_border = dpi(gen_config['CARD_BORDER'])
     game_id = game.get('objectid')
+    width = print_width + 2 * cut_border
+    height = print_height + 2 * cut_border
 
     # create an image
-    out = Image.new('RGB', (width + 2 * cut_border, height + 2 * cut_border), color=(255, 255, 255))
+    out = Image.new('RGB', (width, height), color=(255, 255, 255))
 
     # get a font
     fnt = ImageFont.truetype(gen_config['FONT'], dpi(4))
 
     # Fetch and add image
     image_path = fetch_image(game_id, game.find('image').text)
-    game_image = Image.open(image_path).resize((dpi(49), dpi(38)))
+    game_image = load_sized_image(image_path, dpi(49), dpi(38))
 
     # get a drawing context
     d = ImageDraw.Draw(out)
-    d.rounded_rectangle((cut_border, cut_border, width + cut_border, height + cut_border),
+    d.rounded_rectangle((cut_border, cut_border, print_width + cut_border, print_height + cut_border),
                         radius=dpi(5), width=1, outline=(200, 200, 200))
     d.rounded_rectangle((cut_border + card_border, cut_border + card_border,
-                         width + cut_border - card_border, height + cut_border - card_border),
+                         print_width + cut_border - card_border, print_height + cut_border - card_border),
                         radius=dpi(3), width=1, fill=ImageColor.getrgb(card_config['color']))
 
     # draw multiline text
@@ -116,12 +118,27 @@ def render_as_card(game, card_config, gen_config):
     d.text((dpi(35), dpi(82)), game.find('yearpublished').text, font=fnt, fill=(0, 0, 0))
     card_path = os.path.join(gen_config['CARD_CACHE'], f'{game_id}.png')
     # Add the game image
-    out.paste(game_image, (dpi(8), dpi(14)))
+
+    # paste image centered
+    out.paste(game_image, (int(width/2 - game_image.width / 2), dpi(14)))
 
     # Save results
     out.save(card_path)
     print(f'Created card for game {game_id} in {card_path}')
 
+
+def load_sized_image(image_path, max_width, max_height):
+    """
+    Load an image from path and resize maintaining the aspect ratio
+
+    :param image_path: path to image
+    :param max_width: the maximum width after resize
+    :param max_height: the maximum height after resize
+    """
+    img = Image.open(image_path)
+    width, height = img.size
+    ratio = min(max_width / width, max_height / height)
+    return img.resize((int(width * ratio),  int(height * ratio)))
 
 
 def dpi(length) -> int:

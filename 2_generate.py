@@ -93,6 +93,33 @@ def fetch_image(id, url):
             exit(1)
 
 
+def compact_range(min_value, max_value):
+    """
+    Compare the input values, if both are the same only return one value
+
+    :param min_value: minimum playtime
+    :param max_value: maximum playtime
+    """
+    if min_value == max_value:
+        return min_value
+    else:
+        return f'{min_value}-{max_value}'
+
+
+def compact_number(number: int) -> str:
+    """
+    Return a compact number, this will return a number with a suffix like k, M
+
+    :param number: the number to compact
+    """
+    if number < 1000:
+        return str(number)
+    elif number < 1000000:
+        return f'{number // 1000}K'
+    else:
+        return f'{number // 1000000}M'
+
+
 def render_as_card(game, card_config, gen_config):
     """
     Render a game as a card
@@ -148,16 +175,25 @@ def render_as_card(game, card_config, gen_config):
     # draw multiline text
     d.text((dpi(10), dpi(52.3)), game.find('name').text, font=fnt, fill=(0, 0, 0))
 
+    # Draw game stats for the left side
     d.text((dpi(14), dpi(58)), game.find('yearpublished').text, font=fnt, fill=(0, 0, 0))
-    d.text((dpi(14), dpi(64)), f"{game.find('stats').get('minplaytime')}-{game.find('stats').get('maxplaytime')}", font=fnt, fill=(0, 0, 0))
-    d.text((dpi(14), dpi(70)), game.find('./boardgame/statistics/ratings/average').text, font=fnt, fill=(0, 0, 0))
-    d.text((dpi(14), dpi(76)), game.find('./boardgame/statistics/ratings/owned').text, font=fnt, fill=(0, 0, 0))
-    d.text((dpi(14), dpi(82)), game.find('./boardgame/statistics/ratings/averageweight').text, font=fnt, fill=(0, 0, 0))
+    playtime = compact_range(game.find('stats').get('minplaytime'), game.find('stats').get('maxplaytime'))
+    d.text((dpi(14), dpi(64)), playtime, font=fnt, fill=(0, 0, 0))
+    rating = float(game.find('./boardgame/statistics/ratings/average').text)
+    d.text((dpi(14), dpi(70)), f'{rating:.2f}', font=fnt, fill=(0, 0, 0))
+    games_owned = compact_number(int(game.find('./boardgame/statistics/ratings/owned').text))
+    d.text((dpi(14), dpi(76)), games_owned, font=fnt, fill=(0, 0, 0))
+    weight = float(game.find('./boardgame/statistics/ratings/averageweight').text)
+    d.text((dpi(14), dpi(82)), f'{weight:.2f}', font=fnt, fill=(0, 0, 0))
 
-    d.text((dpi(40), dpi(58)), f"{game.find('stats').get('minplayers')}-{game.find('stats').get('maxplayers')}", font=fnt, fill=(0, 0, 0))
+    # Draw game stats for the right side
+    players = compact_range(game.find('stats').get('minplayers'), game.find('stats').get('maxplayers'))
+    d.text((dpi(40), dpi(58)), players, font=fnt, fill=(0, 0, 0))
     d.text((dpi(40), dpi(64)), game.find('./boardgame/poll[@name="suggested_numplayers"]').get('totalvotes'), font=fnt, fill=(0, 0, 0))
-    d.text((dpi(40), dpi(70)), game.find('./boardgame/age').text, font=fnt, fill=(0, 0, 0))
-    d.text((dpi(40), dpi(76)), game.find('./stats/rating').get('value'), font=fnt, fill=(0, 0, 0))
+    d.text((dpi(40), dpi(70)), f"{game.find('./boardgame/age').text}+", font=fnt, fill=(0, 0, 0))
+    user_rating = game.find('./stats/rating').get('value')
+    if user_rating != 'N/A':
+        d.text((dpi(40), dpi(76)), user_rating, font=fnt, fill=(0, 0, 0))
     d.text((dpi(40), dpi(82)), game.find('numplays').text, font=fnt, fill=(0, 0, 0))
     card_path = os.path.join(gen_config['CARD_CACHE'], f'{game_id}.png')
     # Add the game image

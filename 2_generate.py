@@ -194,8 +194,13 @@ def render_as_card(game, card_config, gen_config):
     user_rating = game.find('./stats/rating').get('value')
     if user_rating != 'N/A':
         d.text((dpi(40), dpi(76)), user_rating, font=fnt, fill=(0, 0, 0))
-    d.text((dpi(40), dpi(82)), game.find('numplays').text, font=fnt, fill=(0, 0, 0))
-    card_path = os.path.join(gen_config['CARD_CACHE'], f'{game_id}.png')
+    user_plays = int(game.find('numplays').text)
+    if user_plays > 10:
+        d.text((dpi(40), dpi(82)), str(user_plays), font=fnt, fill=(0, 0, 0))
+    else:
+        add_lines(d, dpi(40), dpi(83), user_plays)
+
+    card_path = os.path.join(gen_config['CARD_CACHE'], f'{card_config["group"]}{card_config["index"]}-{game_id}.png')
     # Add the game image
     out.paste(game_image, (int(width / 2 - game_image.width / 2), dpi(14)))
 
@@ -238,6 +243,24 @@ def add_boxes(canvas, start_left, start_top, end_right, box_height, step, box_co
         canvas.rounded_rectangle((start_left, start_top, end_right, start_top + box_height),
                                  radius=dpi(1), fill=ImageColor.getrgb(color))
         start_top += step
+
+
+def add_lines(canvas, x, y, number_of_lines):
+    """
+    Add counting lines to the canvas
+
+    :param canvas: the canvas to add the lines to
+    :param x: starting x position
+    :param y: starting y position
+    :param number_of_lines: the number of lines to add
+    """
+    for i in range(0, number_of_lines):
+        if (i+1) % 5 == 0:
+            canvas.line((x, y, x - dpi(3), y + dpi(3)), fill=(0, 0, 0), width=dpi(0.2))
+            x += dpi(0.8)
+        else:
+            canvas.line((x, y, x, y + dpi(3)), fill=(0, 0, 0), width=dpi(0.2))
+            x += dpi(0.6)
 
 
 def load_sized_image(image_path, max_width, max_height):

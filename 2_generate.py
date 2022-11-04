@@ -18,11 +18,11 @@ ICONS = [
     ('iconmonstr-product-14-240.png', 10, 77),
     ('flaticon-weight.png', 10, 83),
 
-    ('iconmonstr-user-29-240.png', 34, 59),
-    ('iconmonstr-user-23-240.png', 34, 65),
-    ('flaticon-age-group.png', 34, 71),
-    ('iconmonstr-thumb-14-240.png', 34, 77),
-    ('iconmonstr-video-15-240.png', 34, 83),
+    ('iconmonstr-user-29-240.png', 36, 59),
+    ('iconmonstr-user-23-240.png', 36, 65),
+    ('flaticon-age-group.png', 36, 71),
+    ('iconmonstr-thumb-14-240.png', 36, 77),
+    ('iconmonstr-video-15-240.png', 36, 83),
 ]
 
 
@@ -123,8 +123,16 @@ def render_as_card(game, card_config, gen_config):
                          print_width + cut_border - card_border, print_height + cut_border - card_border),
                         radius=dpi(3), width=1, fill=ImageColor.getrgb(card_config['color']))
 
+    # Create backdrop for game name
+    d.rounded_rectangle((dpi(9), dpi(53), dpi(56), dpi(57)),
+                        radius=dpi(1), fill=ImageColor.getrgb(gen_config['BOX_COLOR']))
+
+    # Create backdrop for game stats
+    add_boxes(d, dpi(9), dpi(58), dpi(30), dpi(5), dpi(6), 5, gen_config['BOX_COLOR'])
+    add_boxes(d, dpi(35), dpi(58), dpi(56), dpi(5), dpi(6), 5, gen_config['BOX_COLOR'])
+
     # draw multiline text
-    d.text((dpi(9), dpi(52)), game.find('name').text, font=fnt, fill=(0, 0, 0))
+    d.text((dpi(10), dpi(52.3)), game.find('name').text, font=fnt, fill=(0, 0, 0))
 
     d.text((dpi(14), dpi(58)), game.find('yearpublished').text, font=fnt, fill=(0, 0, 0))
     d.text((dpi(14), dpi(64)), f"{game.find('stats').get('minplaytime')}-{game.find('stats').get('maxplaytime')}", font=fnt, fill=(0, 0, 0))
@@ -132,11 +140,11 @@ def render_as_card(game, card_config, gen_config):
     d.text((dpi(14), dpi(76)), game.find('./boardgame/statistics/ratings/owned').text, font=fnt, fill=(0, 0, 0))
     d.text((dpi(14), dpi(82)), game.find('./boardgame/statistics/ratings/averageweight').text, font=fnt, fill=(0, 0, 0))
 
-    d.text((dpi(38), dpi(58)), f"{game.find('stats').get('minplayers')}-{game.find('stats').get('maxplayers')}", font=fnt, fill=(0, 0, 0))
-    d.text((dpi(38), dpi(64)), game.find('./boardgame/poll[@name="suggested_numplayers"]').get('totalvotes'), font=fnt, fill=(0, 0, 0))
-    d.text((dpi(38), dpi(70)), game.find('./boardgame/age').text, font=fnt, fill=(0, 0, 0))
-    d.text((dpi(38), dpi(76)), game.find('./stats/rating').get('value'), font=fnt, fill=(0, 0, 0))
-    d.text((dpi(38), dpi(82)), game.find('numplays').text, font=fnt, fill=(0, 0, 0))
+    d.text((dpi(40), dpi(58)), f"{game.find('stats').get('minplayers')}-{game.find('stats').get('maxplayers')}", font=fnt, fill=(0, 0, 0))
+    d.text((dpi(40), dpi(64)), game.find('./boardgame/poll[@name="suggested_numplayers"]').get('totalvotes'), font=fnt, fill=(0, 0, 0))
+    d.text((dpi(40), dpi(70)), game.find('./boardgame/age').text, font=fnt, fill=(0, 0, 0))
+    d.text((dpi(40), dpi(76)), game.find('./stats/rating').get('value'), font=fnt, fill=(0, 0, 0))
+    d.text((dpi(40), dpi(82)), game.find('numplays').text, font=fnt, fill=(0, 0, 0))
     card_path = os.path.join(gen_config['CARD_CACHE'], f'{game_id}.png')
     # Add the game image
     out.paste(game_image, (int(width / 2 - game_image.width / 2), dpi(14)))
@@ -163,6 +171,25 @@ def add_icon(out, icon_name, position_x, position_y):
     out.paste(icon, (dpi(position_x), dpi(position_y)), icon)
 
 
+def add_boxes(canvas, start_left, start_top, end_right, box_height, step, box_count, color):
+    """
+    Add boxes to the canvas
+
+    :param canvas: The canvas to add the boxes to
+    :param start_left: The left position of the first box
+    :param start_top: The top position of the first box
+    :param end_right: The right position of the last box
+    :param box_height: The height of the boxes
+    :param step: The step between the boxes
+    :param box_count: The number of boxes to add
+    :param color: The color of the boxes
+    """
+    for i in range(0, box_count):
+        canvas.rounded_rectangle((start_left, start_top, end_right, start_top + box_height),
+                                 radius=dpi(1), fill=ImageColor.getrgb(color))
+        start_top += step
+
+
 def load_sized_image(image_path, max_width, max_height):
     """
     Load an image from path and resize maintaining the aspect ratio
@@ -185,7 +212,7 @@ def dpi(length) -> int:
     :return: pixel appropriation to the given dpi value
     """
     dpi_value = int(config['generate']['DPI'])
-    return round(int(length) * (int(dpi_value) / CONVERSION_IN_MM))
+    return int(float(length) * (dpi_value / CONVERSION_IN_MM))
 
 
 if __name__ == '__main__':

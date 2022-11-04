@@ -131,11 +131,53 @@ def compact_number(number: int) -> str:
         return f'{number // 1000000}M'
 
 
+def compact_poll_result(poll_results) -> str:
+    """
+    Compact the poll result
+    Calculate the recommended player count and best player count from poll results
+
+    :param poll_results: The poll result to compact
+    """
+    recommended = []
+    best = []
+    for results in poll_results:
+        result_options = results.findall('result')
+        total_votes = 0
+        for result_option in result_options:
+            total_votes += int(result_option.get('numvotes'))
+        voted_best = int(results.find('result[@value="Best"]').get('numvotes'))
+        voted_recommended = int(results.find('result[@value="Recommended"]').get('numvotes'))
+        if total_votes / 2 < voted_best:
+            best.append(results.get('numplayers'))
+            recommended.append(results.get('numplayers'))
+        if total_votes / 2 < voted_recommended + voted_best:
+            recommended.append(results.get('numplayers'))
+
+    if group_to_str(best) == group_to_str(recommended):
+        return f'{group_to_str(best)}'
+    else:
+        return f'{group_to_str(recommended)} / {group_to_str(best)}'
+
+
+def group_to_str(recommended):
+    """
+    Convert a list of numbers to a string with ranges
+    :param recommended: The list of numbers
+    """
+    if len(recommended) == 0:
+        return '-'
+    if len(recommended) == 1:
+        return str(recommended[0])
+    else:
+        return compact_range(recommended[0], recommended[-1])
+
+
 def render_as_card(game, game_name, card_config, gen_config):
     """
     Render a game as a card
 
     :param game: The game object to render
+    :param game_name: The name of the game
     :param card_config: The configuration for the card
     :param gen_config: The card generation configuration
     """
@@ -201,7 +243,8 @@ def render_as_card(game, game_name, card_config, gen_config):
     # Draw game stats for the right side
     players = compact_range(game.find('stats').get('minplayers'), game.find('stats').get('maxplayers'))
     d.text((dpi(40), dpi(58)), players, font=fnt, fill=(0, 0, 0))
-    d.text((dpi(40), dpi(64)), game.find('./boardgame/poll[@name="suggested_numplayers"]').get('totalvotes'), font=fnt, fill=(0, 0, 0))
+    players_poll_result = compact_poll_result(game.findall('./boardgame/poll[@name="suggested_numplayers"]/results'))
+    d.text((dpi(40), dpi(64)), players_poll_result, font=fnt, fill=(0, 0, 0))
     d.text((dpi(40), dpi(70)), f"{game.find('./boardgame/age').text}+", font=fnt, fill=(0, 0, 0))
     user_rating = game.find('./stats/rating').get('value')
     if user_rating != 'N/A':

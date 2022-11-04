@@ -180,8 +180,9 @@ def render_as_card(game, game_name, card_config, gen_config):
                 fill=ImageColor.getrgb(card_config['color']))
 
     # Render header card
-    d.text((dpi(10), dpi(8)), f"{card_config['group']}{card_config['index']}", font=fnt, fill=(255, 255, 255))
-    d.text((dpi(20), dpi(8)), card_config['category'], font=fnt, fill=(255, 255, 255))
+    d.text((dpi(9), dpi(8)), f"{card_config['group']}{card_config['index']}", font=fnt, fill=(255, 255, 255))
+    _, _, text_width, _ = d.textbbox((0, 0), card_config['category'], font=fnt)
+    d.text(((width - text_width) / 2, dpi(8)), card_config['category'], font=fnt, fill=(255, 255, 255))
 
     # draw multiline text
     d.text((dpi(10), dpi(52.3)), game_name, font=fnt, fill=(0, 0, 0))

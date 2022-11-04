@@ -197,7 +197,7 @@ def render_as_card(game, game_name, card_config, gen_config):
 
     # Fetch and add image
     image_path = fetch_image(game_id, game.find('image').text)
-    game_image = load_sized_image(image_path, dpi(49), dpi(38))
+    game_image = load_sized_image(image_path, dpi(49), dpi(37))
 
     # get a drawing context
     d = ImageDraw.Draw(out)
@@ -208,7 +208,7 @@ def render_as_card(game, game_name, card_config, gen_config):
                         radius=dpi(3), width=1, fill=ImageColor.getrgb(card_config['color']))
 
     # Create backdrop for game name
-    d.rounded_rectangle((dpi(9), dpi(53), dpi(56), dpi(57)),
+    d.rounded_rectangle((dpi(9), dpi(52), dpi(56), dpi(57)),
                         radius=dpi(1), fill=ImageColor.getrgb(gen_config['BOX_COLOR']))
 
     # Create backdrop for game stats
@@ -227,7 +227,8 @@ def render_as_card(game, game_name, card_config, gen_config):
     d.text(((width - text_width) / 2, dpi(8)), card_config['category'], font=fnt, fill=(255, 255, 255))
 
     # draw multiline text
-    d.text((dpi(10), dpi(52.3)), game_name, font=fnt, fill=(0, 0, 0))
+    _, _, text_width, _ = d.textbbox((0, 0), game_name, font=fnt)
+    d.text(((width - text_width) / 2, dpi(52)), game_name, font=fnt, fill=(0, 0, 0))
 
     # Draw game stats for the left side
     d.text((dpi(14), dpi(58)), game.find('yearpublished').text, font=fnt, fill=(0, 0, 0))

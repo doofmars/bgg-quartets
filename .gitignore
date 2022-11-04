@@ -3,3 +3,5 @@
 /cache
 config.ini
 selection.yaml
+resources/iconmonstr*.png
+resources/flaticon*.png

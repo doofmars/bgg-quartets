@@ -193,8 +193,8 @@ def render_as_card(game, game_name, card_config, gen_config):
     out = Image.new('RGB', (width, height), color=(255, 255, 255))
 
     # get a font
-    fnt = ImageFont.truetype(gen_config['FONT'], dpi(4))
-    fnt_heading = ImageFont.truetype(gen_config['FONT'], dpi(5))
+    fnt = ImageFont.truetype(gen_config['FONT_MAIN'], dpi(4))
+    fnt_heading = ImageFont.truetype(gen_config['FONT_HEADING'], dpi(4.8))
 
     # Fetch and add image
     image_path = fetch_image(game_id, game.find('image').text)

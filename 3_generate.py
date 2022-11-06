@@ -227,9 +227,22 @@ def render_as_card(game, game_name, card_config, gen_config):
     _, _, text_width, _ = d.textbbox((0, 0), card_config['category'], font=fnt_heading)
     d.text(((width - text_width) / 2, dpi(7)), card_config['category'], font=fnt_heading, fill=(255, 255, 255))
 
-    # draw multiline text
-    _, _, text_width, _ = d.textbbox((0, 0), game_name, font=fnt_heading)
-    d.text(((width - text_width) / 2, dpi(51.3)), game_name, font=fnt_heading, fill=(0, 0, 0))
+    # Define default font size for game name
+    font_size = 4.8
+    fnt_game_name = ImageFont.truetype(gen_config['FONT_HEADING'], dpi(font_size))
+
+    # Calculate the font size to fit the game name box
+    _, _, text_width, _ = d.textbbox((0, 0), game_name, font=fnt_game_name)
+    # Calculate letter baseline for vertical positioning
+    _, _, _, text_height = d.textbbox((0, 0), "A", font=fnt_game_name)
+    while text_width > dpi(47.5):
+        font_size -= 0.2
+        fnt_game_name = ImageFont.truetype(gen_config['FONT_HEADING'], dpi(font_size))
+        _, _, text_width, _ = d.textbbox((0, 0), game_name, font=fnt_game_name)
+        _, _, _, text_height = d.textbbox((0, 0), "A", font=fnt_game_name)
+
+    # Render game name to canvas
+    d.text(((width - text_width) / 2, dpi(55.8) - text_height), game_name, font=fnt_game_name, fill=(0, 0, 0))
 
     # Draw game stats for the left side
     d.text((dpi(14), dpi(58)), game.find('yearpublished').text, font=fnt, fill=(0, 0, 0))

@@ -194,6 +194,7 @@ def render_as_card(game, game_name, card_config, gen_config):
 
     # get a font
     fnt = ImageFont.truetype(gen_config['FONT'], dpi(4))
+    fnt_heading = ImageFont.truetype(gen_config['FONT'], dpi(5))
 
     # Fetch and add image
     image_path = fetch_image(game_id, game.find('image').text)
@@ -222,13 +223,13 @@ def render_as_card(game, game_name, card_config, gen_config):
                 fill=ImageColor.getrgb(card_config['color']))
 
     # Render header card
-    d.text((dpi(9), dpi(8)), f"{card_config['group']}{card_config['index']}", font=fnt, fill=(255, 255, 255))
-    _, _, text_width, _ = d.textbbox((0, 0), card_config['category'], font=fnt)
-    d.text(((width - text_width) / 2, dpi(8)), card_config['category'], font=fnt, fill=(255, 255, 255))
+    d.text((dpi(9), dpi(7)), f"{card_config['index']}{card_config['group']}", font=fnt_heading, fill=(255, 255, 255))
+    _, _, text_width, _ = d.textbbox((0, 0), card_config['category'], font=fnt_heading)
+    d.text(((width - text_width) / 2, dpi(7)), card_config['category'], font=fnt_heading, fill=(255, 255, 255))
 
     # draw multiline text
-    _, _, text_width, _ = d.textbbox((0, 0), game_name, font=fnt)
-    d.text(((width - text_width) / 2, dpi(52)), game_name, font=fnt, fill=(0, 0, 0))
+    _, _, text_width, _ = d.textbbox((0, 0), game_name, font=fnt_heading)
+    d.text(((width - text_width) / 2, dpi(51.3)), game_name, font=fnt_heading, fill=(0, 0, 0))
 
     # Draw game stats for the left side
     d.text((dpi(14), dpi(58)), game.find('yearpublished').text, font=fnt, fill=(0, 0, 0))

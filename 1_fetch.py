@@ -3,6 +3,7 @@ import json
 import configparser
 import os
 import csv
+from time import sleep
 
 import requests as req
 import xml.etree.ElementTree as ET
@@ -23,6 +24,12 @@ def load_data(url, file_name):
     if not os.path.exists(collection_file):
         print(f'Reading {file_name} page from web')
         response = req.get(url)
+        # Check if response has yielded any game items or is in preparation state
+        while response.text.find('Your request for this collection has been accepted and will be processed') > 0:
+            print(f'Collection not ready yet, waiting 60 seconds')
+            sleep(60)
+            print(f'Reading {file_name} page from web')
+            response = req.get(url)
         with open(collection_file, 'w', encoding='utf-8') as fp:
             fp.write(response.text)
             print(f'{file_name} saved to cache folder')

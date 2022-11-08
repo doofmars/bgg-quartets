@@ -1,6 +1,7 @@
 /.idea
 /venv
 /cache
+/cards
 config.ini
 selection.yaml
 resources/iconmonstr*.png

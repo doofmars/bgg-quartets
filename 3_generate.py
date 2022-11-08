@@ -33,12 +33,14 @@ def load_data():
 
     :return: soup to parse
     """
-    if not os.path.exists(config['generate']['CARD_CACHE']):
-        os.mkdir(config['generate']['CARD_CACHE'])
-    if not os.path.exists(config['fetch']['IMAGE_CACHE_DIRECTORY']):
-        os.mkdir(config['fetch']['IMAGE_CACHE_DIRECTORY'])
-    collection_file_key = config['fetch']['COLLECTION_FILE_KEY']
-    collection_file = os.path.join(config['fetch']['RESULT_DIRECTORY'], f'{collection_file_key}.xml')
+    if not os.path.exists(config['generate']['CARDS_DIRECTORY']):
+        os.mkdir(config['generate']['CARDS_DIRECTORY'])
+    image_cache_path = os.path.join(config['general']['CACHE_DIRECTORY'], config['general']['IMAGE_CACHE_DIRECTORY'])
+    if not os.path.exists(image_cache_path):
+        os.mkdir(image_cache_path)
+
+    collection_file_key = config['general']['COLLECTION_FILE_KEY']
+    collection_file = os.path.join(config['general']['CACHE_DIRECTORY'], f'{collection_file_key}.xml')
     if not os.path.exists(collection_file):
         raise FileNotFoundError('Missing collection_file')
     else:
@@ -66,7 +68,8 @@ def get_selection(selection_file):
 
 def generate_cards():
     generate_config = config['generate']
-    card_selection = get_selection(os.path.join(config['fetch']['RESULT_DIRECTORY'], config['select']['SELECTION']))
+    selection_file_path = os.path.join(config['general']['CACHE_DIRECTORY'], config['general']['SELECTION_FILE_KEY'])
+    card_selection = get_selection(selection_file_path)
     collection = load_data()
     long_names = {}
     for card_config in card_selection:
@@ -89,8 +92,11 @@ def generate_cards():
             print(f'{game_id}: {game_name}')
 
 
-def fetch_image(id, url):
-    image_path = os.path.join(config['fetch']['IMAGE_CACHE_DIRECTORY'], f"{id}.jpeg")
+def fetch_image(game_id, url):
+    image_path = os.path.join(
+        config['general']['CACHE_DIRECTORY'],
+        config['general']['IMAGE_CACHE_DIRECTORY'],
+        f"{game_id}.jpg")
     if os.path.exists(image_path):
         return image_path
     else:
@@ -218,8 +224,9 @@ def render_as_card(game, game_name, card_config, gen_config):
     add_boxes(d, dpi(35), dpi(58), dpi(56), dpi(5), dpi(6), 5, gen_config['BOX_COLOR'])
 
     # Create backdrop for header
-    d.rounded_rectangle((cut_border + card_border, cut_border + card_border, print_width + cut_border - card_border, dpi(20)),
-                        fill=ImageColor.getrgb(card_config['top-color']), radius=dpi(3))
+    d.rounded_rectangle(
+        (cut_border + card_border, cut_border + card_border, print_width + cut_border - card_border, dpi(20)),
+        fill=ImageColor.getrgb(card_config['top-color']), radius=dpi(3))
     d.rectangle((cut_border + card_border, dpi(13), print_width + cut_border - card_border, dpi(20)),
                 fill=ImageColor.getrgb(card_config['color']))
 
@@ -271,7 +278,8 @@ def render_as_card(game, game_name, card_config, gen_config):
     else:
         add_lines(d, dpi(40), dpi(83), user_plays)
 
-    card_path = os.path.join(gen_config['CARD_CACHE'], f'{card_config["group"]}{card_config["index"]}-{game_id}.png')
+    card_file_name = f'{card_config["group"]}{card_config["index"]}-{game_id}.png'
+    card_path = os.path.join(gen_config['CARDS_DIRECTORY'], card_file_name)
     # Add the game image
     out.paste(game_image, (int(width / 2 - game_image.width / 2), dpi(14)))
 
@@ -326,7 +334,7 @@ def add_lines(canvas, x, y, number_of_lines):
     :param number_of_lines: the number of lines to add
     """
     for i in range(0, number_of_lines):
-        if (i+1) % 5 == 0:
+        if (i + 1) % 5 == 0:
             canvas.line((x, y, x - dpi(3), y + dpi(3)), fill=(0, 0, 0), width=dpi(0.2))
             x += dpi(0.8)
         else:

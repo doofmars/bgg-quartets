@@ -18,9 +18,12 @@ def load_data(url, file_name):
     :param file_name: name of cached file
     :return: soup to parse
     """
-    if not os.path.exists(config['fetch']['CACHE_DIRECTORY']):
-        os.makedirs(config['fetch']['CACHE_DIRECTORY'])
-    collection_file = os.path.join(config['fetch']['CACHE_DIRECTORY'], file_name)
+    if not os.path.exists(config['general']['CACHE_DIRECTORY']):
+        os.makedirs(config['general']['CACHE_DIRECTORY'])
+    api_cache_path = os.path.join(config['general']['CACHE_DIRECTORY'], config['general']['API_CACHE_DIRECTORY'])
+    if not os.path.exists(api_cache_path):
+        os.makedirs(api_cache_path)
+    collection_file = os.path.join(api_cache_path, file_name)
     if not os.path.exists(collection_file):
         print(f'Reading {file_name} page from web')
         response = req.get(url)
@@ -45,7 +48,7 @@ def get_collection():
     """
 
     # Find table containing collection
-    collection_file_key = config['fetch']['COLLECTION_FILE_KEY']
+    collection_file_key = config['general']['COLLECTION_FILE_KEY']
     url = f'https://boardgamegeek.com/xmlapi/collection/{config["fetch"]["user"]}?own=1'
     collection = load_data(url, file_name=f'{collection_file_key}.xml')
 
@@ -87,7 +90,7 @@ def get_collection():
 
     # Finally dump combined data as XML
     print(f'\nWriting result to XML:')
-    xml_file_path = os.path.join(config['fetch']['RESULT_DIRECTORY'], f'{collection_file_key}.xml')
+    xml_file_path = os.path.join(config['general']['CACHE_DIRECTORY'], f'{collection_file_key}.xml')
     with open(xml_file_path, 'wb') as fp:
         collection.write(fp, encoding='UTF-8')
 
@@ -99,7 +102,7 @@ def get_collection():
             if key not in csv_fields:
                 csv_fields.append(key)
 
-    csv_file_path = os.path.join(config['fetch']['RESULT_DIRECTORY'], f'{collection_file_key}.csv')
+    csv_file_path = os.path.join(config['general']['CACHE_DIRECTORY'], f'{collection_file_key}.csv')
     with open(csv_file_path, 'w', encoding='UTF-8', newline='') as fp:
         writer = csv.DictWriter(fp, csv_fields)
         writer.writeheader()

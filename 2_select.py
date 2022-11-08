@@ -8,8 +8,9 @@ config = configparser.ConfigParser()
 
 
 def load_collection():
-    collection_file_key = config['fetch']['COLLECTION_FILE_KEY']
-    collection = ET.parse(f'{config["fetch"]["RESULT_DIRECTORY"]}/{collection_file_key}.xml')
+    collection_file_key = config['general']['COLLECTION_FILE_KEY']
+    collection_file_path = os.path.join(config['general']['CACHE_DIRECTORY'], f'{collection_file_key}.xml')
+    collection = ET.parse(collection_file_path)
     return collection.getroot().findall('item')
 
 
@@ -159,7 +160,7 @@ if __name__ == '__main__':
                    'games': selected_game}
 
     # selection file path
-    selection_file = os.path.join(config['fetch']['RESULT_DIRECTORY'], config['select']['SELECTION'])
+    selection_file = os.path.join(config['general']['CACHE_DIRECTORY'], config['general']['SELECTION_FILE_KEY'])
     # write groups to yaml file
     with open(selection_file, 'w', encoding='utf-8') as f:
         yaml.dump({"groups": groups}, f, allow_unicode=True, default_flow_style=False)

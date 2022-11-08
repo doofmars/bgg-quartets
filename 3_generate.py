@@ -49,23 +49,24 @@ def load_data():
 def get_selection(selection_file):
     yaml = YAML(typ='safe')
     selected_games = []
-    with open(selection_file, 'r') as fp:
+    with open(selection_file, 'r', encoding='utf-8') as fp:
         groups = yaml.load(fp)['groups']
-        for group in groups:
-            # loop over grops with index
-            for index, game in enumerate(group['games']):
+        # iterate over key and value of dict groups
+        for group_name, group_data in groups.items():
+            # loop over groups with index
+            for index, game in enumerate(group_data['games']):
                 selected_games.append({'id': game,
                                        'index': index,
-                                       'group': group['name'],
-                                       'category': group['category'],
-                                       'top-color': group['top-color'],
-                                       'color': group['color']})
+                                       'group': group_name,
+                                       'category': group_data['category'],
+                                       'top-color': group_data['top-color'],
+                                       'color': group_data['color']})
     return selected_games
 
 
 def generate_cards():
     generate_config = config['generate']
-    card_selection = get_selection(generate_config['SELECTION'])
+    card_selection = get_selection(os.path.join(config['fetch']['RESULT_DIRECTORY'], config['select']['SELECTION']))
     collection = load_data()
     long_names = {}
     for card_config in card_selection:
@@ -223,7 +224,7 @@ def render_as_card(game, game_name, card_config, gen_config):
                 fill=ImageColor.getrgb(card_config['color']))
 
     # Render header card
-    d.text((dpi(9), dpi(7)), f"{card_config['index']}{card_config['group']}", font=fnt_heading, fill=(255, 255, 255))
+    d.text((dpi(8), dpi(7)), f"{card_config['index']}{card_config['group']}", font=fnt_heading, fill=(255, 255, 255))
     _, _, text_width, _ = d.textbbox((0, 0), card_config['category'], font=fnt_heading)
     d.text(((width - text_width) / 2, dpi(7)), card_config['category'], font=fnt_heading, fill=(255, 255, 255))
 

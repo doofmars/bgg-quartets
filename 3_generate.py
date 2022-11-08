@@ -90,6 +90,7 @@ def generate_cards():
         print('Warning, detected long game names:')
         for game_id, game_name in long_names.items():
             print(f'{game_id}: {game_name}')
+    render_card_back(generate_config)
 
 
 def fetch_image(game_id, url):
@@ -354,6 +355,40 @@ def load_sized_image(image_path, max_width, max_height):
     width, height = img.size
     ratio = min(max_width / width, max_height / height)
     return img.resize((int(width * ratio), int(height * ratio)))
+
+
+def render_card_back(gen_config):
+    """
+    Render the card back
+
+    :param gen_config: The configuration for the card back
+    """
+    print_width = dpi(gen_config['WIDTH'])
+    print_height = dpi(gen_config['HEIGHT'])
+    cut_border = dpi(gen_config['CUT_BORDER'])
+    card_border = dpi(gen_config['CARD_BORDER'])
+    width = print_width + 2 * cut_border
+    height = print_height + 2 * cut_border
+
+    card_back = Image.new('RGB', (width, height), color=(255, 255, 255))
+
+    # get a drawing context
+    d = ImageDraw.Draw(card_back)
+    d.rounded_rectangle((cut_border, cut_border, print_width + cut_border, print_height + cut_border),
+                        radius=dpi(5), width=1, outline=(200, 200, 200))
+
+    back_image = Image.open(gen_config['CARD_BACK_IMAGE']).resize(card_back.size)
+    mask = Image.new("L", card_back.size, 255)
+    draw = ImageDraw.Draw(mask)
+    draw.rounded_rectangle((cut_border + card_border, cut_border + card_border,
+                            print_width + cut_border - card_border, print_height + cut_border - card_border),
+                           radius=dpi(3), width=1, fill=0)
+    card_back = Image.composite(card_back, back_image, mask)
+
+    # Safe back image to file
+    card_back_path = os.path.join(gen_config['CARDS_DIRECTORY'], gen_config["CARD_BACK_FILE_NAME"])
+    card_back.save(card_back_path)
+    print(f'Created card back in {card_back_path}')
 
 
 def dpi(length) -> int:

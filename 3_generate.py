@@ -2,7 +2,6 @@ import configparser
 import os
 import shutil
 import threading
-import xml.etree.ElementTree as ET
 import requests
 from ruamel.yaml import YAML
 
@@ -27,27 +26,6 @@ ICONS = [
 ]
 
 
-def load_data():
-    """
-    Load data cache
-
-    :return: soup to parse
-    """
-    if not os.path.exists(config['generate']['CARDS_DIRECTORY']):
-        os.mkdir(config['generate']['CARDS_DIRECTORY'])
-    image_cache_path = os.path.join(config['general']['CACHE_DIRECTORY'], config['general']['IMAGE_CACHE_DIRECTORY'])
-    if not os.path.exists(image_cache_path):
-        os.mkdir(image_cache_path)
-
-    collection_file_key = config['general']['COLLECTION_FILE_KEY']
-    collection_file = os.path.join(config['general']['CACHE_DIRECTORY'], f'{collection_file_key}.xml')
-    if not os.path.exists(collection_file):
-        raise FileNotFoundError('Missing collection_file')
-    else:
-        print(f'Reading {collection_file} from cache')
-    return ET.parse(collection_file)
-
-
 def get_selection(selection_file):
     yaml = YAML(typ='safe')
     selected_games = []
@@ -55,41 +33,29 @@ def get_selection(selection_file):
         groups = yaml.load(fp)['groups']
         # iterate over key and value of dict groups
         for group_name, group_data in groups.items():
-            # loop over groups with index
+            # loop over games dictionary with index
             for index, game in enumerate(group_data['games']):
-                selected_games.append({'id': game,
-                                       'index': index,
-                                       'group': group_name,
-                                       'category': group_data['category'],
-                                       'top-color': group_data['top-color'],
-                                       'color': group_data['color']})
+                game['index'] = index
+                game['group'] = group_name
+                game['category'] = group_data['category']
+                game['color'] = group_data['color']
+                game['top-color'] = group_data['top-color']
+                selected_games.append(game)
     return selected_games
 
 
 def generate_cards():
+    if not os.path.exists(config['generate']['CARDS_DIRECTORY']):
+        os.mkdir(config['generate']['CARDS_DIRECTORY'])
+    image_cache_path = os.path.join(config['general']['CACHE_DIRECTORY'], config['general']['IMAGE_CACHE_DIRECTORY'])
+    if not os.path.exists(image_cache_path):
+        os.mkdir(image_cache_path)
+
     generate_config = config['generate']
     selection_file_path = os.path.join(config['general']['CACHE_DIRECTORY'], config['general']['SELECTION_FILE_KEY'])
     card_selection = get_selection(selection_file_path)
-    collection = load_data()
-    long_names = {}
-    for card_config in card_selection:
-        game_id = list(card_config["id"].keys())[0]
-        game_name = list(card_config["id"].values())[0]
-
-        game = collection.getroot().find(f'item[@objectid="{game_id}"]')
-        if game is not None:
-            if game_name is None:
-                game_name = game.find('name').text
-                if len(game_name) > 25:
-                    long_names[game_id] = game_name
-            threading.Thread(target=render_as_card, args=(game, game_name, card_config, generate_config)).start()
-        else:
-            print(f'Failed to find game with id {game_id} in collection')
-            exit(1)
-    if long_names:
-        print('Warning, detected long game names:')
-        for game_id, game_name in long_names.items():
-            print(f'{game_id}: {game_name}')
+    for card_data in card_selection:
+        threading.Thread(target=render_as_card, args=(card_data, generate_config)).start()
     render_card_back(generate_config)
 
 
@@ -112,88 +78,17 @@ def fetch_image(game_id, url):
             exit(1)
 
 
-def compact_range(min_value, max_value):
-    """
-    Compare the input values, if both are the same only return one value
-
-    :param min_value: minimum playtime
-    :param max_value: maximum playtime
-    """
-    if min_value == max_value:
-        return min_value
-    else:
-        return f'{min_value}-{max_value}'
-
-
-def compact_number(number: int) -> str:
-    """
-    Return a compact number, this will return a number with a suffix like k, M
-
-    :param number: the number to compact
-    """
-    if number < 1000:
-        return str(number)
-    elif number < 1000000:
-        return f'{number // 1000}K'
-    else:
-        return f'{number // 1000000}M'
-
-
-def compact_poll_result(poll_results) -> str:
-    """
-    Compact the poll result
-    Calculate the recommended player count and best player count from poll results
-
-    :param poll_results: The poll result to compact
-    """
-    recommended = []
-    best = []
-    for results in poll_results:
-        result_options = results.findall('result')
-        total_votes = 0
-        for result_option in result_options:
-            total_votes += int(result_option.get('numvotes'))
-        voted_best = int(results.find('result[@value="Best"]').get('numvotes'))
-        voted_recommended = int(results.find('result[@value="Recommended"]').get('numvotes'))
-        if total_votes / 2 < voted_best:
-            best.append(results.get('numplayers'))
-            recommended.append(results.get('numplayers'))
-        if total_votes / 2 < voted_recommended + voted_best:
-            recommended.append(results.get('numplayers'))
-
-    if group_to_str(best) == group_to_str(recommended):
-        return f'{group_to_str(best)}'
-    else:
-        return f'{group_to_str(recommended)} / {group_to_str(best)}'
-
-
-def group_to_str(recommended):
-    """
-    Convert a list of numbers to a string with ranges
-    :param recommended: The list of numbers
-    """
-    if len(recommended) == 0:
-        return '-'
-    if len(recommended) == 1:
-        return str(recommended[0])
-    else:
-        return compact_range(recommended[0], recommended[-1])
-
-
-def render_as_card(game, game_name, card_config, gen_config):
+def render_as_card(card_data, gen_config):
     """
     Render a game as a card
 
-    :param game: The game object to render
-    :param game_name: The name of the game
-    :param card_config: The configuration for the card
+    :param card_data: The data of the game
     :param gen_config: The card generation configuration
     """
     print_width = dpi(gen_config['WIDTH'])
     print_height = dpi(gen_config['HEIGHT'])
     cut_border = dpi(gen_config['CUT_BORDER'])
     card_border = dpi(gen_config['CARD_BORDER'])
-    game_id = game.get('objectid')
     width = print_width + 2 * cut_border
     height = print_height + 2 * cut_border
 
@@ -205,7 +100,7 @@ def render_as_card(game, game_name, card_config, gen_config):
     fnt_heading = ImageFont.truetype(gen_config['FONT_HEADING'], dpi(4.8))
 
     # Fetch and add image
-    image_path = fetch_image(game_id, game.find('image').text)
+    image_path = fetch_image(card_data['_id'], card_data['image'])
     game_image = load_sized_image(image_path, dpi(49), dpi(37))
 
     # get a drawing context
@@ -214,7 +109,7 @@ def render_as_card(game, game_name, card_config, gen_config):
                         radius=dpi(5), width=1, outline=(200, 200, 200))
     d.rounded_rectangle((cut_border + card_border, cut_border + card_border,
                          print_width + cut_border - card_border, print_height + cut_border - card_border),
-                        radius=dpi(3), width=1, fill=ImageColor.getrgb(card_config['color']))
+                        radius=dpi(3), width=1, fill=ImageColor.getrgb(card_data['color']))
 
     # Create backdrop for game name
     d.rounded_rectangle((dpi(9), dpi(52), dpi(56), dpi(57)),
@@ -227,59 +122,51 @@ def render_as_card(game, game_name, card_config, gen_config):
     # Create backdrop for header
     d.rounded_rectangle(
         (cut_border + card_border, cut_border + card_border, print_width + cut_border - card_border, dpi(20)),
-        fill=ImageColor.getrgb(card_config['top-color']), radius=dpi(3))
+        fill=ImageColor.getrgb(card_data['top-color']), radius=dpi(3))
     d.rectangle((cut_border + card_border, dpi(13), print_width + cut_border - card_border, dpi(20)),
-                fill=ImageColor.getrgb(card_config['color']))
+                fill=ImageColor.getrgb(card_data['color']))
 
     # Render header card
-    d.text((dpi(8), dpi(7)), f"{card_config['index']}{card_config['group']}", font=fnt_heading, fill=(255, 255, 255))
-    _, _, text_width, _ = d.textbbox((0, 0), card_config['category'], font=fnt_heading)
-    d.text(((width - text_width) / 2, dpi(7)), card_config['category'], font=fnt_heading, fill=(255, 255, 255))
+    d.text((dpi(8), dpi(7)), f"{card_data['index']}{card_data['group']}", font=fnt_heading, fill=(255, 255, 255))
+    _, _, text_width, _ = d.textbbox((0, 0), card_data['category'], font=fnt_heading)
+    d.text(((width - text_width) / 2, dpi(7)), card_data['category'], font=fnt_heading, fill=(255, 255, 255))
 
     # Define default font size for game name
     font_size = 4.8
     fnt_game_name = ImageFont.truetype(gen_config['FONT_HEADING'], dpi(font_size))
 
     # Calculate the font size to fit the game name box
-    _, _, text_width, _ = d.textbbox((0, 0), game_name, font=fnt_game_name)
+    _, _, text_width, _ = d.textbbox((0, 0), card_data['name'], font=fnt_game_name)
     # Calculate letter baseline for vertical positioning
     _, _, _, text_height = d.textbbox((0, 0), "A", font=fnt_game_name)
     while text_width > dpi(47.5):
         font_size -= 0.2
         fnt_game_name = ImageFont.truetype(gen_config['FONT_HEADING'], dpi(font_size))
-        _, _, text_width, _ = d.textbbox((0, 0), game_name, font=fnt_game_name)
+        _, _, text_width, _ = d.textbbox((0, 0), card_data['name'], font=fnt_game_name)
         _, _, _, text_height = d.textbbox((0, 0), "A", font=fnt_game_name)
 
     # Render game name to canvas
-    d.text(((width - text_width) / 2, dpi(55.8) - text_height), game_name, font=fnt_game_name, fill=(0, 0, 0))
+    d.text(((width - text_width) / 2, dpi(55.8) - text_height), card_data['name'], font=fnt_game_name, fill=(0, 0, 0))
 
     # Draw game stats for the left side
-    d.text((dpi(14), dpi(58)), game.find('yearpublished').text, font=fnt, fill=(0, 0, 0))
-    playtime = compact_range(game.find('stats').get('minplaytime'), game.find('stats').get('maxplaytime'))
-    d.text((dpi(14), dpi(64)), playtime, font=fnt, fill=(0, 0, 0))
-    rating = float(game.find('./boardgame/statistics/ratings/average').text)
-    d.text((dpi(14), dpi(70)), f'{rating:.2f}', font=fnt, fill=(0, 0, 0))
-    games_owned = compact_number(int(game.find('./boardgame/statistics/ratings/owned').text))
-    d.text((dpi(14), dpi(76)), games_owned, font=fnt, fill=(0, 0, 0))
-    weight = float(game.find('./boardgame/statistics/ratings/averageweight').text)
-    d.text((dpi(14), dpi(82)), f'{weight:.2f}', font=fnt, fill=(0, 0, 0))
+    d.text((dpi(14), dpi(58)), card_data['year'], font=fnt, fill=(0, 0, 0))
+    d.text((dpi(14), dpi(64)), card_data['playtime'], font=fnt, fill=(0, 0, 0))
+    d.text((dpi(14), dpi(70)), card_data['rating'], font=fnt, fill=(0, 0, 0))
+    d.text((dpi(14), dpi(76)), card_data['owners'], font=fnt, fill=(0, 0, 0))
+    d.text((dpi(14), dpi(82)), card_data['weight'], font=fnt, fill=(0, 0, 0))
 
     # Draw game stats for the right side
-    players = compact_range(game.find('stats').get('minplayers'), game.find('stats').get('maxplayers'))
-    d.text((dpi(40), dpi(58)), players, font=fnt, fill=(0, 0, 0))
-    players_poll_result = compact_poll_result(game.findall('./boardgame/poll[@name="suggested_numplayers"]/results'))
-    d.text((dpi(40), dpi(64)), players_poll_result, font=fnt, fill=(0, 0, 0))
-    d.text((dpi(40), dpi(70)), f"{game.find('./boardgame/age').text}+", font=fnt, fill=(0, 0, 0))
-    user_rating = game.find('./stats/rating').get('value')
-    if user_rating != 'N/A':
-        d.text((dpi(40), dpi(76)), user_rating, font=fnt, fill=(0, 0, 0))
-    user_plays = int(game.find('numplays').text)
-    if user_plays > 10:
-        d.text((dpi(40), dpi(82)), str(user_plays), font=fnt, fill=(0, 0, 0))
+    d.text((dpi(40), dpi(58)), card_data['players'], font=fnt, fill=(0, 0, 0))
+    d.text((dpi(40), dpi(64)), card_data['players_recommended'], font=fnt, fill=(0, 0, 0))
+    d.text((dpi(40), dpi(70)), card_data['age'], font=fnt, fill=(0, 0, 0))
+    if card_data['user_rating'] != 'N/A':
+        d.text((dpi(40), dpi(76)), card_data['user_rating'], font=fnt, fill=(0, 0, 0))
+    if card_data['user_play_count'] > 10:
+        d.text((dpi(40), dpi(82)), str(card_data['user_play_count']), font=fnt, fill=(0, 0, 0))
     else:
-        add_lines(d, dpi(40), dpi(83), user_plays)
+        add_lines(d, dpi(40), dpi(83), card_data['user_play_count'])
 
-    card_file_name = f'{card_config["group"]}{card_config["index"]}-{game_id}.png'
+    card_file_name = f'{card_data["group"]}{card_data["index"]}-{card_data["_id"]}.png'
     card_path = os.path.join(gen_config['CARDS_DIRECTORY'], card_file_name)
     # Add the game image
     out.paste(game_image, (int(width / 2 - game_image.width / 2), dpi(14)))
@@ -290,7 +177,7 @@ def render_as_card(game, game_name, card_config, gen_config):
 
     # Save results
     out.save(card_path)
-    print(f'Created card for game {game_id} in {card_path}')
+    print(f'Created card for game {card_data["_id"]} in {card_path}')
 
 
 def add_icon(out, icon_name, position_x, position_y):

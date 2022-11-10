@@ -1,0 +1,42 @@
+general:
+  cache_directory: cache
+  api_cache_directory: api
+  image_cache_directory: images
+  collection_file_key: collection
+  selection_file_key: selection.yaml
+fetch:
+  # User owning the collection
+  user:
+select:
+  # List of card ids to exclude from the selection separated by comma
+  exclude:
+  categories:
+    - Best rank
+    - Games for two
+    - Games for many
+    - Most Played
+  base_colors:
+    - "#F44336"
+    - "#FDD835"
+    - "#4CAF50"
+    - "#03A9F4"
+  top_colors:
+    - "#c62828"
+    - "#f9a825"
+    - "#388e3c"
+    - "#0288d1"
+generate:
+  cards_directory: cards
+  font_main: resources/FallingSky-JKwK.otf
+  font_heading: resources/SourceSansPro-Regular.ttf
+  dpi: 300
+  # Size in mm
+  width: 59
+  height: 91
+  cut_border: 3
+  card_border: 4
+  # Final output color mode
+  color_mode: CMYK
+  box_color: "#ffffff"
+  card_back_image: resources/card_back.jpg
+  card_back_file_name: _Back.png

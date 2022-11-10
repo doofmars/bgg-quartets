@@ -1,15 +1,14 @@
-import configparser
 import os
 import shutil
 import threading
-import requests
-from ruamel.yaml import YAML
 
+import requests
 from PIL import Image, ImageDraw, ImageFont, ImageColor
+from ruamel import yaml
 
 CONVERSION_IN_MM = 25.4
 
-config = configparser.ConfigParser()
+config = yaml.safe_load(open('config.yaml', 'r', encoding='utf-8'))
 
 ICONS = [
     ('iconmonstr-calendar-4-240.png', 10, 59),
@@ -27,10 +26,9 @@ ICONS = [
 
 
 def get_selection(selection_file):
-    yaml = YAML(typ='safe')
     selected_games = []
     with open(selection_file, 'r', encoding='utf-8') as fp:
-        groups = yaml.load(fp)['groups']
+        groups = yaml.safe_load(fp)['groups']
         # iterate over key and value of dict groups
         for group_name, group_data in groups.items():
             # loop over games dictionary with index
@@ -45,14 +43,14 @@ def get_selection(selection_file):
 
 
 def generate_cards():
-    if not os.path.exists(config['generate']['CARDS_DIRECTORY']):
-        os.mkdir(config['generate']['CARDS_DIRECTORY'])
-    image_cache_path = os.path.join(config['general']['CACHE_DIRECTORY'], config['general']['IMAGE_CACHE_DIRECTORY'])
+    if not os.path.exists(config['generate']['cards_directory']):
+        os.mkdir(config['generate']['cards_directory'])
+    image_cache_path = os.path.join(config['general']['cache_directory'], config['general']['image_cache_directory'])
     if not os.path.exists(image_cache_path):
         os.mkdir(image_cache_path)
 
     generate_config = config['generate']
-    selection_file_path = os.path.join(config['general']['CACHE_DIRECTORY'], config['general']['SELECTION_FILE_KEY'])
+    selection_file_path = os.path.join(config['general']['cache_directory'], config['general']['selection_file_key'])
     card_selection = get_selection(selection_file_path)
     for card_data in card_selection:
         threading.Thread(target=render_as_card, args=(card_data, generate_config)).start()
@@ -61,8 +59,8 @@ def generate_cards():
 
 def fetch_image(game_id, url):
     image_path = os.path.join(
-        config['general']['CACHE_DIRECTORY'],
-        config['general']['IMAGE_CACHE_DIRECTORY'],
+        config['general']['cache_directory'],
+        config['general']['image_cache_directory'],
         f"{game_id}.jpg")
     if os.path.exists(image_path):
         return image_path
@@ -85,10 +83,10 @@ def render_as_card(card_data, gen_config):
     :param card_data: The data of the game
     :param gen_config: The card generation configuration
     """
-    print_width = dpi(gen_config['WIDTH'])
-    print_height = dpi(gen_config['HEIGHT'])
-    cut_border = dpi(gen_config['CUT_BORDER'])
-    card_border = dpi(gen_config['CARD_BORDER'])
+    print_width = dpi(gen_config['width'])
+    print_height = dpi(gen_config['height'])
+    cut_border = dpi(gen_config['cut_border'])
+    card_border = dpi(gen_config['card_border'])
     width = print_width + 2 * cut_border
     height = print_height + 2 * cut_border
 
@@ -96,8 +94,8 @@ def render_as_card(card_data, gen_config):
     out = Image.new('RGB', (width, height), color=(255, 255, 255))
 
     # get a font
-    fnt = ImageFont.truetype(gen_config['FONT_MAIN'], dpi(4))
-    fnt_heading = ImageFont.truetype(gen_config['FONT_HEADING'], dpi(4.8))
+    fnt = ImageFont.truetype(gen_config['font_main'], dpi(4))
+    fnt_heading = ImageFont.truetype(gen_config['font_heading'], dpi(4.8))
 
     # Fetch and add image
     image_path = fetch_image(card_data['_id'], card_data['image'])
@@ -113,11 +111,11 @@ def render_as_card(card_data, gen_config):
 
     # Create backdrop for game name
     d.rounded_rectangle((dpi(9), dpi(52), dpi(56), dpi(57)),
-                        radius=dpi(1), fill=ImageColor.getrgb(gen_config['BOX_COLOR']))
+                        radius=dpi(1), fill=ImageColor.getrgb(gen_config['box_color']))
 
     # Create backdrop for game stats
-    add_boxes(d, dpi(9), dpi(58), dpi(30), dpi(5), dpi(6), 5, gen_config['BOX_COLOR'])
-    add_boxes(d, dpi(35), dpi(58), dpi(56), dpi(5), dpi(6), 5, gen_config['BOX_COLOR'])
+    add_boxes(d, dpi(9), dpi(58), dpi(30), dpi(5), dpi(6), 5, gen_config['box_color'])
+    add_boxes(d, dpi(35), dpi(58), dpi(56), dpi(5), dpi(6), 5, gen_config['box_color'])
 
     # Create backdrop for header
     d.rounded_rectangle(
@@ -133,7 +131,7 @@ def render_as_card(card_data, gen_config):
 
     # Define default font size for game name
     font_size = 4.8
-    fnt_game_name = ImageFont.truetype(gen_config['FONT_HEADING'], dpi(font_size))
+    fnt_game_name = ImageFont.truetype(gen_config['font_heading'], dpi(font_size))
 
     # Calculate the font size to fit the game name box
     _, _, text_width, _ = d.textbbox((0, 0), card_data['name'], font=fnt_game_name)
@@ -141,7 +139,7 @@ def render_as_card(card_data, gen_config):
     _, _, _, text_height = d.textbbox((0, 0), "A", font=fnt_game_name)
     while text_width > dpi(47.5):
         font_size -= 0.2
-        fnt_game_name = ImageFont.truetype(gen_config['FONT_HEADING'], dpi(font_size))
+        fnt_game_name = ImageFont.truetype(gen_config['font_heading'], dpi(font_size))
         _, _, text_width, _ = d.textbbox((0, 0), card_data['name'], font=fnt_game_name)
         _, _, _, text_height = d.textbbox((0, 0), "A", font=fnt_game_name)
 
@@ -167,7 +165,7 @@ def render_as_card(card_data, gen_config):
         add_lines(d, dpi(40), dpi(83), card_data['user_play_count'])
 
     card_file_name = f'{card_data["group"]}{card_data["index"]}-{card_data["_id"]}.png'
-    card_path = os.path.join(gen_config['CARDS_DIRECTORY'], card_file_name)
+    card_path = os.path.join(gen_config['cards_directory'], card_file_name)
     # Add the game image
     out.paste(game_image, (int(width / 2 - game_image.width / 2), dpi(14)))
 
@@ -250,10 +248,10 @@ def render_card_back(gen_config):
 
     :param gen_config: The configuration for the card back
     """
-    print_width = dpi(gen_config['WIDTH'])
-    print_height = dpi(gen_config['HEIGHT'])
-    cut_border = dpi(gen_config['CUT_BORDER'])
-    card_border = dpi(gen_config['CARD_BORDER'])
+    print_width = dpi(gen_config['width'])
+    print_height = dpi(gen_config['height'])
+    cut_border = dpi(gen_config['cut_border'])
+    card_border = dpi(gen_config['card_border'])
     width = print_width + 2 * cut_border
     height = print_height + 2 * cut_border
 
@@ -264,7 +262,7 @@ def render_card_back(gen_config):
     d.rounded_rectangle((cut_border, cut_border, print_width + cut_border, print_height + cut_border),
                         radius=dpi(5), width=1, outline=(200, 200, 200))
 
-    back_image = Image.open(gen_config['CARD_BACK_IMAGE']).resize(card_back.size)
+    back_image = Image.open(gen_config['card_back_image']).resize(card_back.size)
     mask = Image.new("L", card_back.size, 255)
     draw = ImageDraw.Draw(mask)
     draw.rounded_rectangle((cut_border + card_border, cut_border + card_border,
@@ -273,7 +271,7 @@ def render_card_back(gen_config):
     card_back = Image.composite(card_back, back_image, mask)
 
     # Safe back image to file
-    card_back_path = os.path.join(gen_config['CARDS_DIRECTORY'], gen_config["CARD_BACK_FILE_NAME"])
+    card_back_path = os.path.join(gen_config['cards_directory'], gen_config['card_back_file_name'])
     card_back.save(card_back_path)
     print(f'Created card back in {card_back_path}')
 
@@ -285,10 +283,9 @@ def dpi(length) -> int:
     :param length: input length in mm
     :return: pixel appropriation to the given dpi value
     """
-    dpi_value = int(config['generate']['DPI'])
+    dpi_value = int(config['generate']['dpi'])
     return int(float(length) * (dpi_value / CONVERSION_IN_MM))
 
 
 if __name__ == '__main__':
-    config.read("config.ini")
     generate_cards()

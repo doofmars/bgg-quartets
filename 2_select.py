@@ -1,15 +1,14 @@
-import configparser
 import os
 import xml.etree.ElementTree as ET
 
 from ruamel import yaml
 
-config = configparser.ConfigParser()
+config = yaml.safe_load(open('config.yaml', 'r', encoding='utf-8'))
 
 
 def load_collection():
-    collection_file_key = config['general']['COLLECTION_FILE_KEY']
-    collection_file_path = os.path.join(config['general']['CACHE_DIRECTORY'], f'{collection_file_key}.xml')
+    collection_file_key = config['general']['collection_file_key']
+    collection_file_path = os.path.join(config['general']['cache_directory'], f'{collection_file_key}.xml')
     collection = ET.parse(collection_file_path)
     return collection.getroot().findall('item')
 
@@ -217,19 +216,18 @@ def by_user_played_often(x, debug=False) -> float:
 
 
 if __name__ == '__main__':
-    config.read("config.ini")
     games = load_collection()
     # Remove games that are in boardgamecategory "Expansion for Base-game" (1042)
     games = [game for game in games if game.find('./boardgame/boardgamecategory[@objectid="1042"]') is None]
     # filter out games that are excluded
-    excluded_games = config['select']['exclude'].split(',')
+    excluded_games = config['select']['exclude']
     games = [game for game in games if game.get('objectid') not in excluded_games]
 
     groups = {}
     games_per_group = 13
-    categories = config['select']['CATEGORIES'].split(',')
-    base_colors = config['select']['BASE_COLORS'].split(',')
-    top_colors = config['select']['TOP_COLORS'].split(',')
+    categories = config['select']['categories']
+    base_colors = config['select']['base_colors']
+    top_colors = config['select']['top_colors']
 
     games, selected_game = select_games(by_rank, games, games_per_group)
     groups['A'] = {'category': categories[0],
@@ -256,7 +254,7 @@ if __name__ == '__main__':
                    }
 
     # selection file path
-    selection_file = os.path.join(config['general']['CACHE_DIRECTORY'], config['general']['SELECTION_FILE_KEY'])
+    selection_file = os.path.join(config['general']['cache_directory'], config['general']['selection_file_key'])
     # write groups to yaml file
     with open(selection_file, 'w', encoding='utf-8') as f:
         yaml.dump({"groups": groups}, f, allow_unicode=True, default_flow_style=False)

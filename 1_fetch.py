@@ -1,6 +1,4 @@
 # coding=utf-8
-import json
-import configparser
 import os
 import csv
 from time import sleep
@@ -8,7 +6,9 @@ from time import sleep
 import requests as req
 import xml.etree.ElementTree as ET
 
-config = configparser.ConfigParser()
+from ruamel import yaml
+
+config = yaml.safe_load(open('config.yaml', 'r', encoding='utf-8'))
 
 
 def load_data(url, file_name):
@@ -18,9 +18,9 @@ def load_data(url, file_name):
     :param file_name: name of cached file
     :return: soup to parse
     """
-    if not os.path.exists(config['general']['CACHE_DIRECTORY']):
-        os.makedirs(config['general']['CACHE_DIRECTORY'])
-    api_cache_path = os.path.join(config['general']['CACHE_DIRECTORY'], config['general']['API_CACHE_DIRECTORY'])
+    if not os.path.exists(config['general']['cache_directory']):
+        os.makedirs(config['general']['cache_directory'])
+    api_cache_path = os.path.join(config['general']['cache_directory'], config['general']['api_cache_directory'])
     if not os.path.exists(api_cache_path):
         os.makedirs(api_cache_path)
     collection_file = os.path.join(api_cache_path, file_name)
@@ -48,7 +48,7 @@ def get_collection():
     """
 
     # Find table containing collection
-    collection_file_key = config['general']['COLLECTION_FILE_KEY']
+    collection_file_key = config['general']['collection_file_key']
     url = f'https://boardgamegeek.com/xmlapi/collection/{config["fetch"]["user"]}?own=1'
     collection = load_data(url, file_name=f'{collection_file_key}.xml')
 
@@ -89,28 +89,28 @@ def get_collection():
         csv_rows.append(csv_row)
 
     # Finally dump combined data as XML
-    print(f'\nWriting result to XML:')
-    xml_file_path = os.path.join(config['general']['CACHE_DIRECTORY'], f'{collection_file_key}.xml')
+    print(f'\nWriting result to XML')
+    xml_file_path = os.path.join(config['general']['cache_directory'], f'{collection_file_key}.xml')
     with open(xml_file_path, 'wb') as fp:
         collection.write(fp, encoding='UTF-8')
+    print(f'XML file written to {xml_file_path}')
 
     # Write card summary data as CSV
-    print(f'\nWriting result to CSV:')
+    print(f'\nWriting result to CSV')
     csv_fields = []
     for row in csv_rows:
         for key in row.keys():
             if key not in csv_fields:
                 csv_fields.append(key)
 
-    csv_file_path = os.path.join(config['general']['CACHE_DIRECTORY'], f'{collection_file_key}.csv')
+    csv_file_path = os.path.join(config['general']['cache_directory'], f'{collection_file_key}.csv')
     with open(csv_file_path, 'w', encoding='UTF-8', newline='') as fp:
         writer = csv.DictWriter(fp, csv_fields)
         writer.writeheader()
         writer.writerows(csv_rows)
 
-    print(f'CSV file written to cache folder')
+    print(f'CSV file written to {csv_file_path}')
 
 
 if __name__ == '__main__':
-    config.read("config.ini")
     get_collection()

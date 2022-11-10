@@ -229,6 +229,9 @@ if __name__ == '__main__':
     games = [game for game in games if game.get('objectid') not in excluded_games]
 
     groups = {}
+    # check if extra cards are defined
+    if isinstance(config['select']['extra'], dict):
+        groups = config['select']['extra']
     games_per_group = 13
     categories = config['select']['categories']
     base_colors = config['select']['base_colors']

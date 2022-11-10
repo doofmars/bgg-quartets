@@ -27,6 +27,27 @@ select:
     - "#0288d1"
   # Replace name of game in the selection <original name>: <new name>
   replace_names:
+  # Optional define a extra group that will be added to the selection
+  # This can be used for joker cards or custom game cards that are not in the collection
+  extra:
+#    E:
+#      category: Meta
+#      color: "#FF9800"
+#      top-color: "#f57c00"
+#      games:
+#        - _id: '0'
+#          age: 10+
+#          image: https://github.com/doofmars/bgg-quartets/raw/master/resources/meta.jpg
+#          name: This game
+#          owners: '1'
+#          players: 2-4
+#          players_recommended: 2-4 / ?
+#          playtime: '10'
+#          rating: '∞'
+#          user_play_count: 0
+#          user_rating: 'N/A'
+#          weight: '1.23'
+#          year: '2022'
 generate:
   cards_directory: cards
   font_main: resources/FallingSky-JKwK.otf

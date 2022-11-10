@@ -98,9 +98,14 @@ def select_games(criteria, games, number_of_cards):
     games_to_remove = []
     for game in sorted_games:
         poll_results = game.findall('./boardgame/poll[@name="suggested_numplayers"]/results')
+
+        name = game.find('name').text
+        if name in config['select']['replace_names']:
+            name = config['select']['replace_names'][name]
+
         selected_games.append({
             '_id': game.get('objectid'),
-            'name': game.find('name').text,
+            'name': name,
             'image': game.find('image').text,
 
             'year': game.find('yearpublished').text,

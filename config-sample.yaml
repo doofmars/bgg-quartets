@@ -25,6 +25,8 @@ select:
     - "#f9a825"
     - "#388e3c"
     - "#0288d1"
+  # Replace name of game in the selection <original name>: <new name>
+  replace_names:
 generate:
   cards_directory: cards
   font_main: resources/FallingSky-JKwK.otf

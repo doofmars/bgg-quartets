@@ -226,7 +226,7 @@ if __name__ == '__main__':
     games = [game for game in games if game.find('./boardgame/boardgamecategory[@objectid="1042"]') is None]
     # filter out games that are excluded
     excluded_games = config['select']['exclude']
-    games = [game for game in games if game.get('objectid') not in excluded_games]
+    games = [game for game in games if int(game.get('objectid')) not in excluded_games]
 
     groups = {}
     # check if extra cards are defined

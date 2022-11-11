@@ -58,6 +58,7 @@ generate:
   height: 91
   cut_border: 3
   card_border: 4
+  print_cut_border: false
   # Final output color mode
   color_mode: CMYK
   box_color: "#ffffff"

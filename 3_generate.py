@@ -103,8 +103,9 @@ def render_as_card(card_data, gen_config):
 
     # get a drawing context
     d = ImageDraw.Draw(out)
-    d.rounded_rectangle((cut_border, cut_border, print_width + cut_border, print_height + cut_border),
-                        radius=dpi(5), width=1, outline=(200, 200, 200))
+    if gen_config['print_cut_border']:
+        d.rounded_rectangle((cut_border, cut_border, print_width + cut_border, print_height + cut_border),
+                            radius=dpi(5), width=1, outline=(200, 200, 200))
     d.rounded_rectangle((cut_border + card_border, cut_border + card_border,
                          print_width + cut_border - card_border, print_height + cut_border - card_border),
                         radius=dpi(3), width=1, fill=ImageColor.getrgb(card_data['color']))
@@ -258,9 +259,10 @@ def render_card_back(gen_config):
     card_back = Image.new('RGB', (width, height), color=(255, 255, 255))
 
     # get a drawing context
-    d = ImageDraw.Draw(card_back)
-    d.rounded_rectangle((cut_border, cut_border, print_width + cut_border, print_height + cut_border),
-                        radius=dpi(5), width=1, outline=(200, 200, 200))
+    if gen_config['print_cut_border']:
+        d = ImageDraw.Draw(card_back)
+        d.rounded_rectangle((cut_border, cut_border, print_width + cut_border, print_height + cut_border),
+                            radius=dpi(5), width=1, outline=(200, 200, 200))
 
     back_image = Image.open(gen_config['card_back_image']).resize(card_back.size)
     mask = Image.new("L", card_back.size, 255)

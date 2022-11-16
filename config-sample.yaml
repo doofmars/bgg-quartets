@@ -9,6 +9,8 @@ fetch:
   # User owning the collection
   user:
 select:
+  # The following value determines how many cards will be selected for each set.
+  games_per_set: 13
   # List of card ids to exclude from the selection
   exclude:
 #    - 123

@@ -232,29 +232,28 @@ if __name__ == '__main__':
     # check if extra cards are defined
     if isinstance(config['select']['extra'], dict):
         groups = config['select']['extra']
-    games_per_group = 13
     categories = config['select']['categories']
     base_colors = config['select']['base_colors']
     top_colors = config['select']['top_colors']
 
-    games, selected_game = select_games(by_rank, games, games_per_group)
+    games, selected_game = select_games(by_rank, games, config['select']['games_per_set'])
     groups['A'] = {'category': categories[0],
                    'color': base_colors[0],
                    'top-color': top_colors[0],
                    'games': selected_game}
-    games, selected_game = select_games(by_best_for_two, games, games_per_group)
+    games, selected_game = select_games(by_best_for_two, games, config['select']['games_per_set'])
     groups['B'] = {'category': categories[1],
                    'color': base_colors[1],
                    'top-color': top_colors[1],
                    'games': selected_game
                    }
-    games, selected_game = select_games(by_best_for_many, games, games_per_group)
+    games, selected_game = select_games(by_best_for_many, games, config['select']['games_per_set'])
     groups['C'] = {'category': categories[2],
                    'color': base_colors[2],
                    'top-color': top_colors[2],
                    'games': selected_game
                    }
-    games, selected_game = select_games(by_user_played_often, games, games_per_group)
+    games, selected_game = select_games(by_user_played_often, games, config['select']['games_per_set'])
     groups['D'] = {'category': categories[3],
                    'color': base_colors[3],
                    'top-color': top_colors[3],

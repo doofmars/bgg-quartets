@@ -1,4 +1,5 @@
 general:
+  # Directory and path setup
   cache_directory: cache
   api_cache_directory: api
   image_cache_directory: images
@@ -8,8 +9,9 @@ fetch:
   # User owning the collection
   user:
 select:
-  # List of card ids to exclude from the selection separated by comma
+  # List of card ids to exclude from the selection
   exclude:
+#    - 123
   categories:
     - Best rank
     - Games for two
@@ -17,14 +19,14 @@ select:
     - Most Played
   base_colors:
     - "#F44336"
-    - "#FDD835"
-    - "#4CAF50"
-    - "#03A9F4"
+    - "#FBC02D"
+    - "#43A047"
+    - "#039BE5"
   top_colors:
     - "#c62828"
-    - "#f9a825"
-    - "#388e3c"
-    - "#0288d1"
+    - "#F9A825"
+    - "#2E7D32"
+    - "#0277BD"
   # Replace name of game in the selection <original name>: <new name>
   replace_names:
   # Optional define a extra group that will be added to the selection
@@ -49,6 +51,7 @@ select:
 #          weight: '1.23'
 #          year: '2022'
 generate:
+  # card generation configuration
   cards_directory: cards
   font_main: resources/FallingSky-JKwK.otf
   font_heading: resources/SourceSansPro-Regular.ttf
